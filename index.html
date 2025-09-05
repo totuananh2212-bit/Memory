@@ -5,35 +5,33 @@
   <title>Website của Wol</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #001a1a url('https://i.ibb.co/ZT6x8xM/leaves-bg.jpg') center/cover no-repeat fixed;
+      margin: 0; font-family: Arial, sans-serif; 
+      background: #001a1a url('https://i.ibb.co/5Mpr9K1/leaves-bg.jpg') center/cover fixed;
       color: #fff;
     }
     header {
-      background: #003333;
-      padding: 15px;
-      text-align: center;
+      background: #001d3d; padding: 15px; text-align: center;
     }
     nav {
-      display: flex;
-      justify-content: center;
-      background: #004d4d;
+      display: flex; justify-content: center; background: #003566;
     }
     nav a {
-      color: #fff;
-      padding: 12px 20px;
-      text-decoration: none;
+      color: #fff; padding: 12px 20px; text-decoration: none;
     }
-    nav a:hover { background: #006666; }
-    section { display: none; padding: 20px; min-height: 90vh; }
+    nav a:hover { background: #00509d; }
+    section { display: none; padding: 20px; min-height: 85vh; }
     section.active { display: block; }
-    .post { background: rgba(0,0,0,0.6); margin: 10px 0; padding: 10px; border-radius: 8px; }
-    .btn { padding: 6px 12px; background: #009999; border: none; color: #fff; border-radius: 6px; cursor: pointer; margin: 2px; }
-    .btn:hover { background: #00cccc; }
-    .like, .dislike, .love { cursor: pointer; margin-right: 10px; }
+    .post {
+      background: rgba(0,0,0,0.6); margin: 10px 0; padding: 10px; border-radius: 8px;
+    }
+    .btn { padding: 6px 12px; background: #0077b6; border: none; color: #fff; border-radius: 6px; cursor: pointer; }
+    .btn:hover { background: #0096c7; }
+    .like, .dislike, .love { cursor: pointer; margin-right: 8px; }
     .comment-box { margin-top: 5px; }
-    input, textarea { padding: 6px; border-radius: 4px; border: none; margin: 3px 0; width: 100%; }
+    input, textarea, select {
+      padding: 6px; margin: 5px 0; width: 100%;
+    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -42,193 +40,216 @@
   </header>
   <nav>
     <a href="#" onclick="showTab('tab1')">1. Ảnh & Video</a>
-    <a href="#" onclick="showTab('tab2')">2. Câu chuyện</a>
-    <a href="#" onclick="showTab('tab3')">3. Thông tin cá nhân</a>
-    <a href="#" onclick="showTab('tab4')">4. Đánh giá</a>
+    <a href="#" onclick="showTab('tab3')">2. Thông tin cá nhân</a>
+    <a href="#" onclick="showTab('tab4')">3. Đánh giá Website</a>
     <a href="#" onclick="showTab('settings')">⚙️ Cài đặt</a>
   </nav>
 
-  <!-- Mục 1 -->
+  <!-- Tab 1: Ảnh & Video -->
   <section id="tab1" class="active">
-    <h2>📸 Đăng ảnh & video</h2>
-    <input type="file" id="mediaInput" multiple accept="image/*,video/*">
-    <textarea id="mediaNote" placeholder="Mô tả..."></textarea>
-    <button class="btn" onclick="addMediaPost()">Đăng</button>
-    <div id="mediaPosts"></div>
+    <h2>📸 Upload Ảnh & Video</h2>
+    <input type="file" id="mediaFile" multiple accept="image/*,video/*">
+    <textarea id="mediaNote" placeholder="Mô tả cho bài đăng..."></textarea>
+    <button class="btn" onclick="addMedia()">Đăng</button>
+    <div id="mediaList"></div>
   </section>
 
-  <!-- Mục 2 -->
-  <section id="tab2">
-    <h2>📖 Viết câu chuyện</h2>
-    <input type="file" id="storyImage" accept="image/*">
-    <textarea id="storyText" placeholder="Nhập nội dung..."></textarea>
-    <button class="btn" onclick="addStory()">Đăng</button>
-    <div id="stories"></div>
-  </section>
-
-  <!-- Mục 3 -->
+  <!-- Tab 3: Thông tin cá nhân -->
   <section id="tab3">
     <h2>👤 Thông tin cá nhân</h2>
-    <input type="text" id="name" placeholder="Họ tên">
+    <input type="text" id="name" placeholder="Họ và tên">
     <input type="text" id="phone" placeholder="Số điện thoại">
     <input type="email" id="email" placeholder="Gmail">
-    <button class="btn" onclick="saveInfo()">Lưu</button>
+    <button class="btn" onclick="saveProfile()">Lưu</button>
+    <div id="profileDisplay"></div>
   </section>
 
-  <!-- Mục 4 -->
+  <!-- Tab 4: Đánh giá Website -->
   <section id="tab4">
-    <h2>⭐ Đánh giá website</h2>
-    <label>Chọn số sao:</label>
+    <h2>⭐ Đánh giá Website</h2>
     <select id="rating">
-      <option>1</option><option>2</option><option>3</option><option>4</option><option>5</option>
+      <option value="1">1 sao</option>
+      <option value="2">2 sao</option>
+      <option value="3">3 sao</option>
+      <option value="4">4 sao</option>
+      <option value="5">5 sao</option>
     </select>
-    <input type="file" id="ratingImage" accept="image/*">
-    <textarea id="ratingComment" placeholder="Viết bình luận..."></textarea>
-    <button class="btn" onclick="addRating()">Gửi</button>
-    <div id="ratings"></div>
+    <textarea id="reviewText" placeholder="Nhận xét..."></textarea>
+    <input type="file" id="reviewFile" accept="image/*">
+    <button class="btn" onclick="addReview()">Gửi</button>
+    <div id="reviewList"></div>
   </section>
 
   <!-- Cài đặt -->
   <section id="settings">
-    <h2>🔐 Cài đặt</h2>
+    <h2>⚙️ Cài đặt Website</h2>
     <div id="loginBox">
       <input type="text" id="username" placeholder="Tài khoản">
       <input type="password" id="password" placeholder="Mật khẩu">
       <button class="btn" onclick="login()">Đăng nhập</button>
     </div>
-    <div id="settingsBox" style="display:none;">
-      <input type="text" id="siteName" placeholder="Tên website mới">
-      <input type="file" id="bgImage" accept="image/*">
-      <button class="btn" onclick="applySettings()">Lưu thay đổi</button>
-      <h3>Sao lưu & Khôi phục</h3>
-      <button class="btn" onclick="exportData()">Xuất JSON</button>
+    <div id="settingsBox" class="hidden">
+      <input type="text" id="newTitle" placeholder="Tên website mới">
+      <input type="file" id="bgFile" accept="image/*">
+      <button class="btn" onclick="applySettings()">Áp dụng</button>
+      <hr>
+      <button class="btn" onclick="exportData()">📤 Xuất dữ liệu</button>
       <input type="file" id="importFile" onchange="importData(event)">
     </div>
   </section>
 
   <script>
-    let data = JSON.parse(localStorage.getItem("websiteData")) || {media:[], stories:[], info:{}, ratings:[]};
+    let data = JSON.parse(localStorage.getItem("wolData") || `{
+      "media": [], "profile": {}, "reviews": []
+    }`);
 
-    function saveData(){ localStorage.setItem("websiteData", JSON.stringify(data)); }
+    function save() { localStorage.setItem("wolData", JSON.stringify(data)); }
 
-    function showTab(id){
+    function showTab(id) {
       document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
       document.getElementById(id).classList.add("active");
-      renderAll();
+      render();
     }
 
-    // Mục 1
-    function addMediaPost(){
-      const files = document.getElementById("mediaInput").files;
-      const note = document.getElementById("mediaNote").value;
-      let post = {note, files:[], comments:[], likes:0, dislikes:0, loves:0};
-      [...files].forEach(f=>{
-        let reader = new FileReader();
-        reader.onload = e=>{ post.files.push({type:f.type,src:e.target.result}); saveData(); renderMedia(); };
-        reader.readAsDataURL(f);
-      });
-      data.media.push(post); saveData(); renderMedia();
-      document.getElementById("mediaNote").value="";
+    // Tab1: Media
+    function addMedia(){
+      let files=document.getElementById("mediaFile").files;
+      let note=document.getElementById("mediaNote").value;
+      if(files.length===0 && !note.trim()) return;
+      let post={note:note, files:[], comments:[], likes:0, dislikes:0, loves:0};
+      for(let f of files){
+        let url=URL.createObjectURL(f);
+        post.files.push({type:f.type.startsWith("image")?"img":"video",url});
+      }
+      data.media.unshift(post); save(); render();
+      document.getElementById("mediaNote").value=""; document.getElementById("mediaFile").value="";
     }
     function renderMedia(){
-      let c=document.getElementById("mediaPosts"); c.innerHTML="";
-      data.media.forEach((p,i)=>{
+      let box=document.getElementById("mediaList"); box.innerHTML="";
+      data.media.forEach((m,i)=>{
         let div=document.createElement("div"); div.className="post";
-        div.innerHTML=`<p>${p.note}</p>`+p.files.map(f=>f.type.startsWith("image")?`<img src="${f.src}" width="200">`:`<video src="${f.src}" width="200" controls></video>`).join("")+
-        `<p>👍 ${p.likes} <span class="like" onclick="react('media',${i},'likes')">Like</span>
-        👎 ${p.dislikes} <span class="dislike" onclick="react('media',${i},'dislikes')">Dislike</span>
-        ❤️ ${p.loves} <span class="love" onclick="react('media',${i},'loves')">Tim</span>
-        <button class="btn" onclick="delPost('media',${i})">Xóa</button></p>
-        <div><input placeholder="Tên"><input placeholder="Bình luận"><button onclick="addComment('media',${i},this)">Gửi</button></div>
-        <div>${p.comments.map(c=>`<p><b>${c.name}</b>: ${c.text}</p>`).join("")}</div>`;
-        c.prepend(div);
+        div.innerHTML=`<p>${m.note||""}</p>`+
+          m.files.map(f=>f.type==="img"?`<img src="${f.url}" width="200">`:`<video src="${f.url}" width="200" controls></video>`).join("")+
+          `<br>
+          <span class="like" onclick="likeMedia(${i})">👍 ${m.likes}</span>
+          <span class="dislike" onclick="dislikeMedia(${i})">👎 ${m.dislikes}</span>
+          <span class="love" onclick="loveMedia(${i})">❤️ ${m.loves}</span>
+          <button class="btn" onclick="deleteMedia(${i})">Xóa</button>
+          <div class="comment-box">
+            <input type="text" id="cmtName${i}" placeholder="Tên">
+            <input type="text" id="cmtInput${i}" placeholder="Bình luận...">
+            <button class="btn" onclick="addComment(${i})">Gửi</button>
+            <div>${m.comments.map((c,j)=>`<p><b>${c.name}:</b> ${c.text}
+              <span onclick="likeComment(${i},${j})">👍 ${c.likes}</span>
+              <span onclick="dislikeComment(${i},${j})">👎 ${c.dislikes}</span>
+              <span onclick="loveComment(${i},${j})">❤️ ${c.loves}</span>
+              <button onclick="deleteComment(${i},${j})">X</button></p>`).join("")}</div>
+          </div>`;
+        box.appendChild(div);
       });
     }
-
-    // Mục 2
-    function addStory(){
-      const file=document.getElementById("storyImage").files[0];
-      const text=document.getElementById("storyText").value;
-      let story={text,img:null,comments:[],likes:0,dislikes:0,loves:0};
-      if(file){
-        let r=new FileReader(); r.onload=e=>{story.img=e.target.result; data.stories.push(story); saveData(); renderStories();};
-        r.readAsDataURL(file);
-      }else{ data.stories.push(story); saveData(); renderStories(); }
-      document.getElementById("storyText").value="";
+    function likeMedia(i){data.media[i].likes++;save();renderMedia();}
+    function dislikeMedia(i){data.media[i].dislikes++;save();renderMedia();}
+    function loveMedia(i){data.media[i].loves++;save();renderMedia();}
+    function deleteMedia(i){data.media.splice(i,1);save();renderMedia();}
+    function addComment(i){
+      let name=document.getElementById("cmtName"+i).value||"Khách";
+      let text=document.getElementById("cmtInput"+i).value;
+      if(!text.trim())return;
+      data.media[i].comments.push({name,text,likes:0,dislikes:0,loves:0});
+      save(); renderMedia();
     }
-    function renderStories(){
-      let c=document.getElementById("stories"); c.innerHTML="";
-      data.stories.forEach((s,i)=>{
+    function likeComment(i,j){data.media[i].comments[j].likes++;save();renderMedia();}
+    function dislikeComment(i,j){data.media[i].comments[j].dislikes++;save();renderMedia();}
+    function loveComment(i,j){data.media[i].comments[j].loves++;save();renderMedia();}
+    function deleteComment(i,j){data.media[i].comments.splice(j,1);save();renderMedia();}
+
+    // Tab3: Profile
+    function saveProfile(){
+      data.profile={name:document.getElementById("name").value,
+                    phone:document.getElementById("phone").value,
+                    email:document.getElementById("email").value};
+      save(); renderProfile();
+    }
+    function renderProfile(){
+      let p=data.profile||{}; 
+      document.getElementById("profileDisplay").innerHTML=
+        `<p><b>Họ tên:</b> ${p.name||""}</p>
+         <p><b>SĐT:</b> ${p.phone||""}</p>
+         <p><b>Gmail:</b> ${p.email||""}</p>`;
+      document.getElementById("name").value=p.name||"";
+      document.getElementById("phone").value=p.phone||"";
+      document.getElementById("email").value=p.email||"";
+    }
+
+    // Tab4: Reviews
+    function addReview(){
+      let star=document.getElementById("rating").value;
+      let text=document.getElementById("reviewText").value;
+      let file=document.getElementById("reviewFile").files[0];
+      let url=file?URL.createObjectURL(file):null;
+      let r={star,text,file:url,likes:0,dislikes:0,loves:0};
+      data.reviews.unshift(r); save(); renderReviews();
+      document.getElementById("reviewText").value=""; document.getElementById("reviewFile").value="";
+    }
+    function renderReviews(){
+      let box=document.getElementById("reviewList"); box.innerHTML="";
+      data.reviews.forEach((r,i)=>{
         let div=document.createElement("div"); div.className="post";
-        div.innerHTML=`<p>${s.text}</p>${s.img?`<img src="${s.img}" width="200">`:""}
-        <p>👍 ${s.likes} <span class="like" onclick="react('stories',${i},'likes')">Like</span>
-        👎 ${s.dislikes} <span class="dislike" onclick="react('stories',${i},'dislikes')">Dislike</span>
-        ❤️ ${s.loves} <span class="love" onclick="react('stories',${i},'loves')">Tim</span>
-        <button class="btn" onclick="delPost('stories',${i})">Xóa</button></p>
-        <div><input placeholder="Tên"><input placeholder="Bình luận"><button onclick="addComment('stories',${i},this)">Gửi</button></div>
-        <div>${s.comments.map(c=>`<p><b>${c.name}</b>: ${c.text}</p>`).join("")}</div>`;
-        c.prepend(div);
+        div.innerHTML=`<p>⭐ ${r.star} sao</p><p>${r.text}</p>`+
+          (r.file?`<img src="${r.file}" width="200">`:"")+`<br>
+          <span onclick="likeReview(${i})">👍 ${r.likes}</span>
+          <span onclick="dislikeReview(${i})">👎 ${r.dislikes}</span>
+          <span onclick="loveReview(${i})">❤️ ${r.loves}</span>
+          <button class="btn" onclick="deleteReview(${i})">Xóa</button>`;
+        box.appendChild(div);
       });
     }
+    function likeReview(i){data.reviews[i].likes++;save();renderReviews();}
+    function dislikeReview(i){data.reviews[i].dislikes++;save();renderReviews();}
+    function loveReview(i){data.reviews[i].loves++;save();renderReviews();}
+    function deleteReview(i){data.reviews.splice(i,1);save();renderReviews();}
 
-    // Mục 3
-    function saveInfo(){
-      data.info={name:document.getElementById("name").value,phone:document.getElementById("phone").value,email:document.getElementById("email").value};
-      saveData(); alert("Đã lưu!");
+    // Settings
+    function login(){
+      let u=document.getElementById("username").value;
+      let p=document.getElementById("password").value;
+      if(u==="Toanh2212"&&p==="22012000"){
+        document.getElementById("loginBox").classList.add("hidden");
+        document.getElementById("settingsBox").classList.remove("hidden");
+      } else { alert("Sai tài khoản hoặc mật khẩu!"); }
     }
-
-    // Mục 4
-    function addRating(){
-      const stars=document.getElementById("rating").value;
-      const text=document.getElementById("ratingComment").value;
-      const file=document.getElementById("ratingImage").files[0];
-      let rObj={stars,text,img:null,comments:[],likes:0,dislikes:0,loves:0};
-      if(file){let r=new FileReader(); r.onload=e=>{rObj.img=e.target.result; data.ratings.push(rObj); saveData(); renderRatings();}; r.readAsDataURL(file);}
-      else{data.ratings.push(rObj); saveData(); renderRatings();}
-      document.getElementById("ratingComment").value="";
-    }
-    function renderRatings(){
-      let c=document.getElementById("ratings"); c.innerHTML="";
-      data.ratings.forEach((r,i)=>{
-        let div=document.createElement("div"); div.className="post";
-        div.innerHTML=`<p>${"⭐".repeat(r.stars)}</p><p>${r.text}</p>${r.img?`<img src="${r.img}" width="200">`:""}
-        <p>👍 ${r.likes} <span class="like" onclick="react('ratings',${i},'likes')">Like</span>
-        👎 ${r.dislikes} <span class="dislike" onclick="react('ratings',${i},'dislikes')">Dislike</span>
-        ❤️ ${r.loves} <span class="love" onclick="react('ratings',${i},'loves')">Tim</span>
-        <button class="btn" onclick="delPost('ratings',${i})">Xóa</button></p>
-        <div><input placeholder="Tên"><input placeholder="Bình luận"><button onclick="addComment('ratings',${i},this)">Gửi</button></div>
-        <div>${r.comments.map(c=>`<p><b>${c.name}</b>: ${c.text}</p>`).join("")}</div>`;
-        c.prepend(div);
-      });
-    }
-
-    // Bình luận & phản ứng
-    function addComment(type,i,btn){
-      let inputs=btn.parentNode.querySelectorAll("input");
-      let name=inputs[0].value, text=inputs[1].value;
-      if(name && text){data[type][i].comments.push({name,text}); saveData(); renderAll();}
-    }
-    function react(type,i,key){data[type][i][key]++; saveData(); renderAll();}
-    function delPost(type,i){data[type].splice(i,1); saveData(); renderAll();}
-
-    // Cài đặt
-    function login(){if(document.getElementById("username").value==="Toanh2212" && document.getElementById("password").value==="22012000"){document.getElementById("loginBox").style.display="none";document.getElementById("settingsBox").style.display="block";}else alert("Sai tài khoản/mật khẩu!");}
     function applySettings(){
-      let name=document.getElementById("siteName").value;
-      if(name) document.getElementById("siteTitle").innerText=name;
-      let file=document.getElementById("bgImage").files[0];
-      if(file){let r=new FileReader(); r.onload=e=>{document.body.style.backgroundImage=`url(${e.target.result})`;}; r.readAsDataURL(file);}
+      let t=document.getElementById("newTitle").value;
+      if(t){document.getElementById("siteTitle").innerText=t;}
+      let f=document.getElementById("bgFile").files[0];
+      if(f){document.body.style.background=`url(${URL.createObjectURL(f)}) center/cover fixed`;}
     }
 
-    // Xuất / Nhập
-    function exportData(){let blob=new Blob([JSON.stringify(data)],{type:"application/json"});let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="backup.json";a.click();}
-    function importData(e){let f=e.target.files[0];let r=new FileReader();r.onload=ev=>{data=JSON.parse(ev.target.result);saveData();renderAll();};r.readAsText(f);}
+    // Backup
+    function exportData(){
+      let blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+      let a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download="backup.json";
+      a.click();
+    }
+    function importData(e){
+      let file=e.target.files[0];
+      let reader=new FileReader();
+      reader.onload=function(ev){
+        data=JSON.parse(ev.target.result); save(); render();
+      }
+      reader.readAsText(file);
+    }
 
-    function renderAll(){renderMedia();renderStories();renderRatings();document.getElementById("name").value=data.info.name||"";document.getElementById("phone").value=data.info.phone||"";document.getElementById("email").value=data.info.email||"";}
-    renderAll();
+    // Render
+    function render(){renderMedia();renderProfile();renderReviews();}
+    render();
   </script>
 </body>
 </html>
+
 
 
 
