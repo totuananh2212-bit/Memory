@@ -2,54 +2,50 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Ký Ức Xanh</title>
+  <title>Website Xanh Đen</title>
   <style>
     body {
-      margin: 0;
+      background-color: #0a1a1a;
+      color: #e0ffe0;
       font-family: Arial, sans-serif;
-      background-color: #0a1a0f;
-      color: #f0f0f0;
-      background-image: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');
-      background-size: cover;
-      background-attachment: fixed;
+      background-image: url('https://www.transparenttextures.com/patterns/green-dust-and-scratches.png');
     }
     header {
-      background: rgba(0, 50, 30, 0.9);
-      padding: 15px;
       text-align: center;
-      font-size: 24px;
-      font-weight: bold;
+      padding: 20px;
+      background-color: #002222;
     }
     nav {
       display: flex;
       justify-content: center;
-      background: #062d1c;
+      gap: 20px;
+      background-color: #003333;
+      padding: 10px;
     }
     nav button {
-      background: transparent;
-      border: none;
-      padding: 14px 20px;
+      padding: 10px 20px;
+      background: #004444;
       color: #fff;
-      font-size: 16px;
+      border: none;
       cursor: pointer;
+      border-radius: 6px;
     }
     nav button:hover {
-      background: #145c39;
+      background: #006666;
     }
-    .content {
-      padding: 20px;
-    }
-    .section {
+    section {
       display: none;
+      padding: 20px;
     }
     .active {
       display: block;
     }
     .card {
-      background: rgba(0, 0, 0, 0.6);
+      background: #001111;
+      border-radius: 8px;
       padding: 15px;
-      margin: 10px 0;
-      border-radius: 10px;
+      margin-bottom: 15px;
+      box-shadow: 0 0 10px rgba(0,255,0,0.2);
     }
     input, textarea {
       width: 100%;
@@ -58,241 +54,211 @@
       border-radius: 5px;
       border: none;
     }
-    button.action {
-      margin-top: 5px;
-      padding: 6px 12px;
+    .actions button {
+      margin-right: 10px;
+      padding: 5px 10px;
       border: none;
       border-radius: 5px;
-      background: #145c39;
-      color: #fff;
       cursor: pointer;
     }
-    .comment {
-      margin-left: 15px;
-      font-size: 14px;
-    }
+    .like { background: #008800; color: #fff; }
+    .dislike { background: #880000; color: #fff; }
+    .love { background: #cc00cc; color: #fff; }
+    .delete { background: #444; color: #fff; }
+    .comment-box { margin-top: 10px; }
+    .comment { background: #002222; padding: 5px; border-radius: 5px; margin-top: 5px; }
   </style>
 </head>
 <body>
-  <header id="siteTitle">🌿 Ký Ức Xanh 🌿</header>
+  <header>
+    <h1 id="siteTitle">🌿 Website Xanh Đen 🌿</h1>
+  </header>
   <nav>
-    <button onclick="showSection('media')">Mục 1: Ảnh & Video</button>
-    <button onclick="showSection('story')">Mục 2: Câu chuyện</button>
-    <button onclick="showSection('contact')">Mục 3: Liên hệ</button>
-    <button onclick="showSection('review')">Mục 4: Đánh giá</button>
-    <button onclick="login()">⚙️ Cài đặt</button>
+    <button onclick="showSection('media')">Ảnh & Video</button>
+    <button onclick="showSection('stories')">Câu chuyện</button>
+    <button onclick="showSection('info')">Thông tin</button>
+    <button onclick="showSection('rating')">Đánh giá</button>
+    <button onclick="loginSettings()">Cài đặt</button>
   </nav>
 
-  <div class="content">
-    <!-- Mục 1 -->
-    <div id="media" class="section active">
-      <h2>📷 Ảnh & Video</h2>
-      <input type="text" id="mediaUrl" placeholder="Link ảnh hoặc video...">
-      <input type="text" id="mediaDesc" placeholder="Mô tả...">
-      <button class="action" onclick="addMedia()">Đăng</button>
-      <div id="mediaList"></div>
-    </div>
+  <!-- Mục 1 -->
+  <section id="media" class="active">
+    <h2>📷 Ảnh & Video</h2>
+    <input type="file" id="mediaFile" accept="image/*,video/*"><br>
+    <textarea id="mediaDesc" placeholder="Mô tả..."></textarea>
+    <button onclick="addMedia()">Đăng</button>
+    <div id="mediaList"></div>
+  </section>
 
-    <!-- Mục 2 -->
-    <div id="story" class="section">
-      <h2>📖 Câu chuyện</h2>
-      <textarea id="storyText" placeholder="Viết câu chuyện..."></textarea>
-      <input type="text" id="storyImg" placeholder="Link ảnh minh họa...">
-      <button class="action" onclick="addStory()">Đăng</button>
-      <div id="storyList"></div>
-    </div>
+  <!-- Mục 2 -->
+  <section id="stories">
+    <h2>📖 Câu chuyện</h2>
+    <textarea id="storyText" placeholder="Viết câu chuyện..."></textarea><br>
+    <input type="file" id="storyImg" accept="image/*"><br>
+    <button onclick="addStory()">Đăng</button>
+    <div id="storyList"></div>
+  </section>
 
-    <!-- Mục 3 -->
-    <div id="contact" class="section">
-      <h2>📇 Liên hệ</h2>
-      <input type="text" id="name" placeholder="Họ tên">
-      <input type="text" id="phone" placeholder="Số điện thoại">
-      <input type="email" id="email" placeholder="Email">
-      <button class="action" onclick="saveContact()">Lưu</button>
-      <div id="contactInfo"></div>
-    </div>
+  <!-- Mục 3 -->
+  <section id="info">
+    <h2>📌 Thông tin cá nhân</h2>
+    <input id="name" placeholder="Họ tên">
+    <input id="phone" placeholder="Số điện thoại">
+    <input id="gmail" placeholder="Gmail">
+    <button onclick="saveInfo()">Lưu</button>
+  </section>
 
-    <!-- Mục 4 -->
-    <div id="review" class="section">
-      <h2>⭐ Đánh giá website</h2>
-      <input type="number" id="rating" min="1" max="5" placeholder="Số sao (1-5)">
-      <textarea id="reviewText" placeholder="Viết bình luận..."></textarea>
-      <input type="text" id="reviewImg" placeholder="Link ảnh minh họa (nếu có)">
-      <button class="action" onclick="addReview()">Gửi</button>
-      <div id="reviewList"></div>
-    </div>
+  <!-- Mục 4 -->
+  <section id="rating">
+    <h2>⭐ Đánh giá Website</h2>
+    <select id="stars">
+      <option value="1">⭐</option>
+      <option value="2">⭐⭐</option>
+      <option value="3">⭐⭐⭐</option>
+      <option value="4">⭐⭐⭐⭐</option>
+      <option value="5">⭐⭐⭐⭐⭐</option>
+    </select><br>
+    <textarea id="ratingComment" placeholder="Nhận xét..."></textarea><br>
+    <input type="file" id="ratingImg" accept="image/*"><br>
+    <button onclick="addRating()">Gửi</button>
+    <div id="ratingList"></div>
+  </section>
 
-    <!-- Cài đặt -->
-    <div id="settings" class="section">
-      <h2>⚙️ Cài đặt</h2>
-      <input type="text" id="newTitle" placeholder="Tên website mới">
-      <input type="text" id="bgUrl" placeholder="Link ảnh nền mới">
-      <button class="action" onclick="updateSettings()">Cập nhật</button>
-    </div>
-  </div>
+  <!-- Cài đặt -->
+  <section id="settings">
+    <h2>⚙️ Cài đặt</h2>
+    <input type="text" id="newTitle" placeholder="Tên website mới">
+    <button onclick="changeTitle()">Đổi tên</button><br><br>
+    <input type="file" id="bgFile" accept="image/*">
+    <button onclick="changeBackground()">Đổi nền</button>
+  </section>
 
   <script>
-    // Hiển thị section
     function showSection(id) {
-      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
     }
 
-    // Xử lý Media
-    function addMedia() {
-      let url = document.getElementById("mediaUrl").value;
-      let desc = document.getElementById("mediaDesc").value;
-      if(!url) return;
-      let posts = JSON.parse(localStorage.getItem("media")) || [];
-      posts.push({url, desc, comments:[], likes:0});
-      localStorage.setItem("media", JSON.stringify(posts));
-      renderMedia();
-    }
-    function renderMedia() {
-      let posts = JSON.parse(localStorage.getItem("media")) || [];
-      let html = "";
-      posts.forEach((p,i)=>{
-        html += `<div class="card">
-          ${p.url.includes("mp4") ? `<video controls src="${p.url}" width="300"></video>` : `<img src="${p.url}" width="300">`}
-          <p>${p.desc}</p>
-          <button onclick="likeMedia(${i})">👍 ${p.likes}</button>
-          <button onclick="deleteMedia(${i})">🗑️ Xóa</button>
-        </div>`;
-      });
-      document.getElementById("mediaList").innerHTML = html;
-    }
-    function likeMedia(i){
-      let posts = JSON.parse(localStorage.getItem("media")) || [];
-      posts[i].likes++;
-      localStorage.setItem("media", JSON.stringify(posts));
-      renderMedia();
-    }
-    function deleteMedia(i){
-      let posts = JSON.parse(localStorage.getItem("media")) || [];
-      posts.splice(i,1);
-      localStorage.setItem("media", JSON.stringify(posts));
-      renderMedia();
-    }
-
-    // Câu chuyện
-    function addStory(){
-      let text = document.getElementById("storyText").value;
-      let img = document.getElementById("storyImg").value;
-      if(!text) return;
-      let stories = JSON.parse(localStorage.getItem("stories")) || [];
-      stories.push({text, img, likes:0});
-      localStorage.setItem("stories", JSON.stringify(stories));
-      renderStory();
-    }
-    function renderStory(){
-      let stories = JSON.parse(localStorage.getItem("stories")) || [];
-      let html = "";
-      stories.forEach((s,i)=>{
-        html += `<div class="card">
-          <p>${s.text}</p>
-          ${s.img ? `<img src="${s.img}" width="300">` : ""}
-          <button onclick="likeStory(${i})">👍 ${s.likes}</button>
-          <button onclick="deleteStory(${i})">🗑️ Xóa</button>
-        </div>`;
-      });
-      document.getElementById("storyList").innerHTML = html;
-    }
-    function likeStory(i){
-      let stories = JSON.parse(localStorage.getItem("stories")) || [];
-      stories[i].likes++;
-      localStorage.setItem("stories", JSON.stringify(stories));
-      renderStory();
-    }
-    function deleteStory(i){
-      let stories = JSON.parse(localStorage.getItem("stories")) || [];
-      stories.splice(i,1);
-      localStorage.setItem("stories", JSON.stringify(stories));
-      renderStory();
-    }
-
-    // Liên hệ
-    function saveContact(){
-      let info = {
-        name: document.getElementById("name").value,
-        phone: document.getElementById("phone").value,
-        email: document.getElementById("email").value
-      };
-      localStorage.setItem("contact", JSON.stringify(info));
-      renderContact();
-    }
-    function renderContact(){
-      let info = JSON.parse(localStorage.getItem("contact")) || {};
-      document.getElementById("contactInfo").innerHTML = 
-        `<p>👤 ${info.name||""}</p>
-         <p>📞 ${info.phone||""}</p>
-         <p>✉️ ${info.email||""}</p>`;
-    }
-
-    // Đánh giá
-    function addReview(){
-      let stars = document.getElementById("rating").value;
-      let text = document.getElementById("reviewText").value;
-      let img = document.getElementById("reviewImg").value;
-      if(!stars) return;
-      let reviews = JSON.parse(localStorage.getItem("reviews")) || [];
-      reviews.push({stars,text,img});
-      localStorage.setItem("reviews", JSON.stringify(reviews));
-      renderReview();
-    }
-    function renderReview(){
-      let reviews = JSON.parse(localStorage.getItem("reviews")) || [];
-      let html="";
-      reviews.forEach((r,i)=>{
-        html+=`<div class="card">
-          <p>⭐ ${r.stars}/5</p>
-          <p>${r.text}</p>
-          ${r.img? `<img src="${r.img}" width="200">` : ""}
-          <button onclick="deleteReview(${i})">🗑️ Xóa</button>
-        </div>`;
-      });
-      document.getElementById("reviewList").innerHTML = html;
-    }
-    function deleteReview(i){
-      let reviews = JSON.parse(localStorage.getItem("reviews")) || [];
-      reviews.splice(i,1);
-      localStorage.setItem("reviews", JSON.stringify(reviews));
-      renderReview();
-    }
-
-    // Cài đặt
-    function login(){
+    function loginSettings() {
       let user = prompt("Nhập tài khoản:");
       let pass = prompt("Nhập mật khẩu:");
-      if(user==="Toanh2212" && pass==="22012000"){
-        showSection('settings');
+      if (user === "Toanh2212" && pass === "22012000") {
+        showSection("settings");
       } else {
         alert("Sai tài khoản hoặc mật khẩu!");
       }
     }
-    function updateSettings(){
-      let newTitle = document.getElementById("newTitle").value;
-      let bgUrl = document.getElementById("bgUrl").value;
-      if(newTitle){
-        document.getElementById("siteTitle").innerText = newTitle;
-        localStorage.setItem("siteTitle", newTitle);
-      }
-      if(bgUrl){
-        document.body.style.backgroundImage = `url(${bgUrl})`;
-        localStorage.setItem("bgUrl", bgUrl);
-      }
+
+    // ================== MỤC 1 ==================
+    function addMedia() {
+      let file = document.getElementById("mediaFile").files[0];
+      let desc = document.getElementById("mediaDesc").value;
+      if (!file) return;
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        let media = { type: file.type.startsWith("video") ? "video" : "img", src: e.target.result, desc, comments: [], likes:0, dislikes:0, loves:0 };
+        let mediaList = JSON.parse(localStorage.getItem("mediaList") || "[]");
+        mediaList.push(media);
+        localStorage.setItem("mediaList", JSON.stringify(mediaList));
+        renderMedia();
+      };
+      reader.readAsDataURL(file);
     }
 
-    // Load dữ liệu khi mở lại web
-    window.onload = ()=>{
+    function renderMedia() {
+      let mediaList = JSON.parse(localStorage.getItem("mediaList") || "[]");
+      let container = document.getElementById("mediaList");
+      container.innerHTML = "";
+      mediaList.forEach((m, i) => {
+        let card = document.createElement("div");
+        card.className = "card";
+        if (m.type === "img") {
+          card.innerHTML = `<img src="${m.src}" width="200"><p>${m.desc}</p>`;
+        } else {
+          card.innerHTML = `<video src="${m.src}" width="200" controls></video><p>${m.desc}</p>`;
+        }
+        card.innerHTML += `
+          <div class="actions">
+            <button class="like" onclick="likeMedia(${i})">👍 ${m.likes}</button>
+            <button class="dislike" onclick="dislikeMedia(${i})">👎 ${m.dislikes}</button>
+            <button class="love" onclick="loveMedia(${i})">❤️ ${m.loves}</button>
+            <button class="delete" onclick="deleteMedia(${i})">🗑️</button>
+          </div>
+          <div class="comment-box">
+            <input id="comment${i}" placeholder="Bình luận...">
+            <button onclick="addMediaComment(${i})">Gửi</button>
+            <div id="comments${i}"></div>
+          </div>
+        `;
+        container.appendChild(card);
+        renderMediaComments(i);
+      });
+    }
+
+    function likeMedia(i) { updateMediaReaction(i,"likes"); }
+    function dislikeMedia(i) { updateMediaReaction(i,"dislikes"); }
+    function loveMedia(i) { updateMediaReaction(i,"loves"); }
+
+    function updateMediaReaction(i, type) {
+      let mediaList = JSON.parse(localStorage.getItem("mediaList") || "[]");
+      mediaList[i][type]++;
+      localStorage.setItem("mediaList", JSON.stringify(mediaList));
       renderMedia();
-      renderStory();
-      renderContact();
-      renderReview();
-      let savedTitle = localStorage.getItem("siteTitle");
-      if(savedTitle) document.getElementById("siteTitle").innerText = savedTitle;
-      let savedBg = localStorage.getItem("bgUrl");
-      if(savedBg) document.body.style.backgroundImage = `url(${savedBg})`;
+    }
+
+    function deleteMedia(i) {
+      let mediaList = JSON.parse(localStorage.getItem("mediaList") || "[]");
+      mediaList.splice(i,1);
+      localStorage.setItem("mediaList", JSON.stringify(mediaList));
+      renderMedia();
+    }
+
+    function addMediaComment(i) {
+      let cmt = document.getElementById("comment"+i).value;
+      if (!cmt) return;
+      let mediaList = JSON.parse(localStorage.getItem("mediaList") || "[]");
+      mediaList[i].comments.push({text:cmt,likes:0,dislikes:0,loves:0});
+      localStorage.setItem("mediaList", JSON.stringify(mediaList));
+      renderMediaComments(i);
+    }
+
+    function renderMediaComments(i) {
+      let mediaList = JSON.parse(localStorage.getItem("mediaList") || "[]");
+      let container = document.getElementById("comments"+i);
+      container.innerHTML = "";
+      mediaList[i].comments.forEach((c,j)=>{
+        let div = document.createElement("div");
+        div.className = "comment";
+        div.innerHTML = `
+          ${c.text}
+          <button class="like" onclick="mediaCommentReaction(${i},${j},'likes')">👍 ${c.likes}</button>
+          <button class="dislike" onclick="mediaCommentReaction(${i},${j},'dislikes')">👎 ${c.dislikes}</button>
+          <button class="love" onclick="mediaCommentReaction(${i},${j},'loves')">❤️ ${c.loves}</button>
+          <button class="delete" onclick="deleteMediaComment(${i},${j})">🗑️</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function mediaCommentReaction(i,j,type){
+      let mediaList = JSON.parse(localStorage.getItem("mediaList") || "[]");
+      mediaList[i].comments[j][type]++;
+      localStorage.setItem("mediaList", JSON.stringify(mediaList));
+      renderMediaComments(i);
+    }
+
+    function deleteMediaComment(i,j){
+      let mediaList = JSON.parse(localStorage.getItem("mediaList") || "[]");
+      mediaList[i].comments.splice(j,1);
+      localStorage.setItem("mediaList", JSON.stringify(mediaList));
+      renderMediaComments(i);
+    }
+
+    // ================== LOAD LẠI ==================
+    window.onload = () => {
+      renderMedia();
     }
   </script>
 </body>
 </html>
+
