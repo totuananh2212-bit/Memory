@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Website Sáng Tạo của Wol</title>
+  <style>
+    body {
+      margin: 0; font-family: Arial, sans-serif; color: #fff;
+    }
+    header {
+      background: #001d3d; padding: 15px; text-align: center;
+    }
+    nav {
+      display: flex; justify-content: center; background: #003566;
+    }
+    nav a {
+      color: #fff; padding: 12px 20px; text-decoration: none;
+    }
+    nav a:hover { background: #00509d; }
+    section { display: none; padding: 20px; min-height: 90vh; }
+    section.active { display: block; }
+
+    /* Mục 1 - ban đêm */
+    #tab1 { background: url('https://i.ibb.co/9vY0ZLt/night-street.jpg') center/cover no-repeat; }
+    #tab1 .post { background: rgba(0,0,0,0.7); margin: 10px; padding: 10px; border-radius: 8px; }
+
+    /* Mục 2 - ban ngày */
+    #tab2 { background: url('https://i.ibb.co/J5ZXrtd/day-sky.jpg') center/cover no-repeat; color: #000; }
+    #tab2 textarea { width: 100%; padding: 10px; }
+
+    /* Mục 3 - vũ trụ */
+    #tab3 { background: url('https://i.ibb.co/k6QzRz9/space.jpg') center/cover no-repeat; }
+    #tab3 .post { background: rgba(0,0,50,0.7); margin: 10px; padding: 10px; border-radius: 8px; }
+
+    /* Mục 4 - Cài đặt */
+    #tab4 { background: #222; color: #fff; }
+    #tab4 input { margin: 5px 0; padding: 6px; width: 100%; }
+
+    .btn { padding: 6px 12px; background: #0077b6; border: none; color: #fff; border-radius: 6px; cursor: pointer; }
+    .btn:hover { background: #0096c7; }
+    .like { cursor: pointer; color: #ffdd00; }
+    .comment-box { margin-top: 5px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="siteTitle">🌊 Website Sáng Tạo của Wol</h1>
+  </header>
+  <nav>
+    <a href="#" onclick="showTab('tab1')">1. Tranh & Video</a>
+    <a href="#" onclick="showTab('tab2')">2. Câu chuyện</a>
+    <a href="#" onclick="showTab('tab3')">3. Bài viết</a>
+    <a href="#" onclick="showTab('tab4')">⚙️ Cài đặt</a>
+  </nav>
+
+  <!-- Tab 1 -->
+  <section id="tab1" class="active">
+    <h2>📸 Upload Tranh Ảnh & Video</h2>
+    <input type="file" id="mediaInput" multiple accept="image/*,video/*">
+    <textarea id="noteInput" placeholder="Ghi chú cho bài đăng..."></textarea>
+    <button class="btn" onclick="addMediaPost()">Đăng</button>
+    <div id="mediaPosts"></div>
+  </section>
+
+  <!-- Tab 2 -->
+  <section id="tab2">
+    <h2>📖 Viết câu chuyện</h2>
+    <input type="text" id="storyCategory" placeholder="Tên mục (Ví dụ: Tuổi thơ)">
+    <textarea id="storyText" rows="6" placeholder="Nhập nội dung câu chuyện..."></textarea>
+    <button class="btn" onclick="addStory()">Đăng</button>
+    <div id="stories"></div>
+  </section>
+
+  <!-- Tab 3 -->
+  <section id="tab3">
+    <h2>🪐 Bài viết có Like & Bình luận</h2>
+    <textarea id="postText" rows="4" placeholder="Viết bài viết..."></textarea>
+    <button class="btn" onclick="addPost()">Đăng</button>
+    <div id="posts"></div>
+  </section>
+
+  <!-- Tab 4 - Cài đặt -->
+  <section id="tab4">
+    <h2>⚙️ Cài đặt Website</h2>
+    <label>Đổi tên Website:</label>
+    <input type="text" id="siteNameInput" placeholder="Nhập tên website mới...">
+    
+    <label>Đặt tên mặc định cho người lạ bình luận:</label>
+    <input type="text" id="guestNameInput" placeholder="Ví dụ: Khách vãng lai">
+    
+    <label>Ảnh nền mục 1 (Tranh & Video):</label>
+    <input type="text" id="bgTab1" placeholder="Dán link ảnh nền...">
+    
+    <label>Ảnh nền mục 2 (Câu chuyện):</label>
+    <input type="text" id="bgTab2" placeholder="Dán link ảnh nền...">
+    
+    <label>Ảnh nền mục 3 (Bài viết):</label>
+    <input type="text" id="bgTab3" placeholder="Dán link ảnh nền...">
+
+    <button class="btn" onclick="applySettings()">Lưu thay đổi</button>
+  </section>
+
+  <script>
+    let guestName = "Người lạ";
+
+    function showTab(id) {
+      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    // Mục 1: Media
+    function addMediaPost() {
+      const files = document.getElementById("mediaInput").files;
+      const note = document.getElementById("noteInput").value;
+      let container = document.getElementById("mediaPosts");
+      let div = document.createElement("div");
+      div.className = "post";
+      div.innerHTML = "<p>"+note+"</p>";
+      [...files].forEach(file => {
+        let url = URL.createObjectURL(file);
+        if (file.type.startsWith("image")) {
+          div.innerHTML += `<img src="${url}" width="200">`;
+        } else if (file.type.startsWith("video")) {
+          div.innerHTML += `<video src="${url}" width="200" controls></video>`;
+        }
+      });
+      container.prepend(div);
+      document.getElementById("noteInput").value="";
+    }
+
+    // Mục 2: Story
+    function addStory() {
+      const cat = document.getElementById("storyCategory").value;
+      const text = document.getElementById("storyText").value;
+      let container = document.getElementById("stories");
+      let div = document.createElement("div");
+      div.className = "post";
+      div.innerHTML = `<h3>${cat}</h3><p>${text}</p>`;
+      container.prepend(div);
+      document.getElementById("storyCategory").value="";
+      document.getElementById("storyText").value="";
+    }
+
+    // Mục 3: Post + Like + Comment
+    function addPost() {
+      const text = document.getElementById("postText").value;
+      let container = document.getElementById("posts");
+      let div = document.createElement("div");
+      div.className = "post";
+      div.innerHTML = `
+        <p>${text}</p>
+        <span class="like" onclick="likePost(this)">👍 Like (<span>0</span>)</span>
+        <div class="comment-box">
+          <input type="text" placeholder="Bình luận...">
+          <button class="btn" onclick="addComment(this)">Gửi</button>
+          <div class="comments"></div>
+        </div>
+      `;
+      container.prepend(div);
+      document.getElementById("postText").value="";
+    }
+
+    function likePost(el) {
+      let span = el.querySelector("span");
+      span.innerText = parseInt(span.innerText) + 1;
+    }
+
+    function addComment(btn) {
+      let input = btn.parentNode.querySelector("input");
+      let text = input.value;
+      if(text.trim()!==""){
+        let comments = btn.parentNode.querySelector(".comments");
+        let p = document.createElement("p");
+        p.innerHTML = `<b>${guestName}:</b> ${text}`;
+        comments.appendChild(p);
+        input.value="";
+      }
+    }
+
+    // Mục 4: Apply Settings
+    function applySettings() {
+      const newTitle = document.getElementById("siteNameInput").value;
+      const newGuest = document.getElementById("guestNameInput").value;
+      const bg1 = document.getElementById("bgTab1").value;
+      const bg2 = document.getElementById("bgTab2").value;
+      const bg3 = document.getElementById("bgTab3").value;
+
+      if(newTitle.trim()!=="") document.getElementById("siteTitle").innerText = newTitle;
+      if(newGuest.trim()!=="") guestName = newGuest;
+      if(bg1.trim()!=="") document.getElementById("tab1").style.background = `url('${bg1}') center/cover no-repeat`;
+      if(bg2.trim()!=="") document.getElementById("tab2").style.background = `url('${bg2}') center/cover no-repeat`;
+      if(bg3.trim()!=="") document.getElementById("tab3").style.background = `url('${bg3}') center/cover no-repeat`;
+
+      alert("✅ Cập nhật thành công!");
+    }
+  </script>
+</body>
+</html>
