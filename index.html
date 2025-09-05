@@ -1,198 +1,588 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Website Sáng Tạo của Wol</title>
-  <style>
-    body {
-      margin: 0; font-family: Arial, sans-serif; color: #fff;
-    }
-    header {
-      background: #001d3d; padding: 15px; text-align: center;
-    }
-    nav {
-      display: flex; justify-content: center; background: #003566;
-    }
-    nav a {
-      color: #fff; padding: 12px 20px; text-decoration: none;
-    }
-    nav a:hover { background: #00509d; }
-    section { display: none; padding: 20px; min-height: 90vh; }
-    section.active { display: block; }
-
-    /* Mục 1 - ban đêm */
-    #tab1 { background: url('https://i.ibb.co/9vY0ZLt/night-street.jpg') center/cover no-repeat; }
-    #tab1 .post { background: rgba(0,0,0,0.7); margin: 10px; padding: 10px; border-radius: 8px; }
-
-    /* Mục 2 - ban ngày */
-    #tab2 { background: url('https://i.ibb.co/J5ZXrtd/day-sky.jpg') center/cover no-repeat; color: #000; }
-    #tab2 textarea { width: 100%; padding: 10px; }
-
-    /* Mục 3 - vũ trụ */
-    #tab3 { background: url('https://i.ibb.co/k6QzRz9/space.jpg') center/cover no-repeat; }
-    #tab3 .post { background: rgba(0,0,50,0.7); margin: 10px; padding: 10px; border-radius: 8px; }
-
-    /* Mục 4 - Cài đặt */
-    #tab4 { background: #222; color: #fff; }
-    #tab4 input { margin: 5px 0; padding: 6px; width: 100%; }
-
-    .btn { padding: 6px 12px; background: #0077b6; border: none; color: #fff; border-radius: 6px; cursor: pointer; }
-    .btn:hover { background: #0096c7; }
-    .like { cursor: pointer; color: #ffdd00; }
-    .comment-box { margin-top: 5px; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Website Wol</title>
+<style>
+  :root{
+    --bg:#081018;
+    --panel:#06121a;
+    --accent:#0a7a6b;
+    --muted:#9fb8af;
+    --card: rgba(255,255,255,0.04);
+    --danger:#e05b5b;
+  }
+  html,body{height:100%;margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:var(--bg);color:#e6fff9;}
+  body{
+    background-image: url('https://i.ibb.co/8x2Qx6W/leaf-pattern.png');
+    background-position:center; background-size:cover;
+    background-blend-mode:overlay;
+  }
+  header{background:linear-gradient(90deg,#001219 0%, #002b2b 100%);padding:18px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 3px 10px rgba(0,0,0,0.5);}
+  header h1{margin:0;font-size:20px;color:#bff0e1;}
+  nav{display:flex;gap:8px}
+  nav button{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);padding:8px 12px;border-radius:6px;cursor:pointer}
+  nav button.active{background:var(--accent);color:#021; font-weight:700}
+  main{display:flex;gap:18px;padding:18px}
+  aside{width:260px;background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.15));border:1px solid rgba(255,255,255,0.03);border-radius:10px;padding:14px;height:calc(100vh - 120px);overflow:auto}
+  section.content{flex:1;background:linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1));padding:16px;border-radius:10px;height:calc(100vh - 120px);overflow:auto}
+  .card{background:var(--card);padding:12px;border-radius:8px;margin-bottom:12px}
+  input[type=text], input[type=tel], input[type=email], textarea, select{width:100%;padding:8px;margin-top:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+  textarea{min-height:90px;resize:vertical}
+  .btn{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#021;cursor:pointer;font-weight:600}
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+  .posts{display:flex;flex-direction:column;gap:12px}
+  .post .media{display:flex;gap:8px;flex-wrap:wrap}
+  img.preview{max-width:220px;border-radius:6px;display:block}
+  video{max-width:320px;border-radius:6px}
+  .meta{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+  .actions{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .like,.dislike{cursor:pointer;padding:6px 8px;border-radius:6px;border:1px solid rgba(255,255,255,0.04)}
+  .comments{margin-top:8px;border-top:1px dashed rgba(255,255,255,0.03);padding-top:8px}
+  .comment{display:flex;justify-content:space-between;gap:8px;padding:6px 0;font-size:14px}
+  .small{font-size:13px;color:var(--muted)}
+  .danger{color:var(--danger);cursor:pointer}
+  .flex-row{display:flex;gap:8px;align-items:center}
+  .star{cursor:pointer;font-size:20px;padding:4px}
+  .center{display:flex;align-items:center;justify-content:center}
+  footer{padding:12px;color:var(--muted);text-align:center}
+  /* responsive */
+  @media(max-width:900px){aside{display:none} main{padding:12px}}
+</style>
 </head>
 <body>
-  <header>
-    <h1 id="siteTitle">🌊 Website Sáng Tạo của Wol</h1>
-  </header>
-  <nav>
-    <a href="#" onclick="showTab('tab1')">1. Tranh & Video</a>
-    <a href="#" onclick="showTab('tab2')">2. Câu chuyện</a>
-    <a href="#" onclick="showTab('tab3')">3. Bài viết</a>
-    <a href="#" onclick="showTab('tab4')">⚙️ Cài đặt</a>
+
+<header>
+  <div style="display:flex;gap:12px;align-items:center">
+    <img src="https://i.ibb.co/H4rF6zq/leaf-icon.png" alt="" style="width:42px;height:42px;border-radius:8px">
+    <div>
+      <h1 id="siteTitle">Wol's Khu Vườn</h1>
+      <div class="small">Màu xanh đậm, trang trí lá — lưu nội dung cục bộ</div>
+    </div>
+  </div>
+
+  <nav id="mainNav">
+    <button data-tab="tab1" class="active">1. Ảnh & Video</button>
+    <button data-tab="tab2">2. Câu chuyện</button>
+    <button data-tab="tab3">3. Liên hệ</button>
+    <button data-tab="tab4">4. Đánh giá</button>
+    <button data-tab="settings">⚙️ Cài đặt</button>
   </nav>
+</header>
 
-  <!-- Tab 1 -->
-  <section id="tab1" class="active">
-    <h2>📸 Upload Tranh Ảnh & Video</h2>
-    <input type="file" id="mediaInput" multiple accept="image/*,video/*">
-    <textarea id="noteInput" placeholder="Ghi chú cho bài đăng..."></textarea>
-    <button class="btn" onclick="addMediaPost()">Đăng</button>
-    <div id="mediaPosts"></div>
-  </section>
+<main>
+  <aside>
+    <div class="card">
+      <div class="small">Người dùng khi bình luận có thể đặt tên tùy ý.</div>
+      <label class="small">Tên mặc định (không bắt buộc):</label>
+      <input id="defaultName" placeholder="Ví dụ: Khách vãng lai">
+      <button class="btn" onclick="saveDefaultName()">Lưu tên</button>
+    </div>
 
-  <!-- Tab 2 -->
-  <section id="tab2">
-    <h2>📖 Viết câu chuyện</h2>
-    <input type="text" id="storyCategory" placeholder="Tên mục (Ví dụ: Tuổi thơ)">
-    <textarea id="storyText" rows="6" placeholder="Nhập nội dung câu chuyện..."></textarea>
-    <button class="btn" onclick="addStory()">Đăng</button>
-    <div id="stories"></div>
-  </section>
+    <div class="card">
+      <div class="small">Tùy chọn giao diện</div>
+      <label class="small">Ảnh nền (URL):</label>
+      <input id="bgUrl" placeholder="Dán link ảnh nền...">
+      <button class="btn ghost" onclick="applyBg()">Áp dụng nền</button>
+      <hr style="border:none;height:8px">
+      <div class="small">Bạn có thể thay đổi tiêu đề trang ở Cài đặt (cần đăng nhập).</div>
+    </div>
 
-  <!-- Tab 3 -->
-  <section id="tab3">
-    <h2>🪐 Bài viết có Like & Bình luận</h2>
-    <textarea id="postText" rows="4" placeholder="Viết bài viết..."></textarea>
-    <button class="btn" onclick="addPost()">Đăng</button>
-    <div id="posts"></div>
-  </section>
+    <div class="card">
+      <div class="small">Xoá mọi dữ liệu local</div>
+      <button class="btn ghost" onclick="clearAll()">XÓA TOÀN BỘ (local)</button>
+      <div class="small" style="margin-top:8px;color:#ffdede">Cảnh báo: hành động này xóa mọi dữ liệu trong trình duyệt.</div>
+    </div>
+  </aside>
 
-  <!-- Tab 4 - Cài đặt -->
-  <section id="tab4">
-    <h2>⚙️ Cài đặt Website</h2>
-    <label>Đổi tên Website:</label>
-    <input type="text" id="siteNameInput" placeholder="Nhập tên website mới...">
-    
-    <label>Đặt tên mặc định cho người lạ bình luận:</label>
-    <input type="text" id="guestNameInput" placeholder="Ví dụ: Khách vãng lai">
-    
-    <label>Ảnh nền mục 1 (Tranh & Video):</label>
-    <input type="text" id="bgTab1" placeholder="Dán link ảnh nền...">
-    
-    <label>Ảnh nền mục 2 (Câu chuyện):</label>
-    <input type="text" id="bgTab2" placeholder="Dán link ảnh nền...">
-    
-    <label>Ảnh nền mục 3 (Bài viết):</label>
-    <input type="text" id="bgTab3" placeholder="Dán link ảnh nền...">
-
-    <button class="btn" onclick="applySettings()">Lưu thay đổi</button>
-  </section>
-
-  <script>
-    let guestName = "Người lạ";
-
-    function showTab(id) {
-      document.querySelectorAll("section").forEach(s => s.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
-    }
-
-    // Mục 1: Media
-    function addMediaPost() {
-      const files = document.getElementById("mediaInput").files;
-      const note = document.getElementById("noteInput").value;
-      let container = document.getElementById("mediaPosts");
-      let div = document.createElement("div");
-      div.className = "post";
-      div.innerHTML = "<p>"+note+"</p>";
-      [...files].forEach(file => {
-        let url = URL.createObjectURL(file);
-        if (file.type.startsWith("image")) {
-          div.innerHTML += `<img src="${url}" width="200">`;
-        } else if (file.type.startsWith("video")) {
-          div.innerHTML += `<video src="${url}" width="200" controls></video>`;
-        }
-      });
-      container.prepend(div);
-      document.getElementById("noteInput").value="";
-    }
-
-    // Mục 2: Story
-    function addStory() {
-      const cat = document.getElementById("storyCategory").value;
-      const text = document.getElementById("storyText").value;
-      let container = document.getElementById("stories");
-      let div = document.createElement("div");
-      div.className = "post";
-      div.innerHTML = `<h3>${cat}</h3><p>${text}</p>`;
-      container.prepend(div);
-      document.getElementById("storyCategory").value="";
-      document.getElementById("storyText").value="";
-    }
-
-    // Mục 3: Post + Like + Comment
-    function addPost() {
-      const text = document.getElementById("postText").value;
-      let container = document.getElementById("posts");
-      let div = document.createElement("div");
-      div.className = "post";
-      div.innerHTML = `
-        <p>${text}</p>
-        <span class="like" onclick="likePost(this)">👍 Like (<span>0</span>)</span>
-        <div class="comment-box">
-          <input type="text" placeholder="Bình luận...">
-          <button class="btn" onclick="addComment(this)">Gửi</button>
-          <div class="comments"></div>
+  <section class="content">
+    <!-- Tab 1 -->
+    <div id="tab1" class="tab card">
+      <h2>1. Ảnh & Video (Đăng + Mô tả)</h2>
+      <div class="card">
+        <label>Nội dung mô tả:</label>
+        <textarea id="mediaDesc" placeholder="Ghi mô tả..."></textarea>
+        <label>Chọn ảnh/ video (multiple):</label>
+        <input id="mediaFiles" type="file" accept="image/*,video/*" multiple>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn" onclick="addMediaPost()">Đăng & Lưu</button>
+          <button class="btn ghost" onclick="renderMediaPosts()">Làm mới</button>
         </div>
-      `;
-      container.prepend(div);
-      document.getElementById("postText").value="";
-    }
+      </div>
 
-    function likePost(el) {
-      let span = el.querySelector("span");
-      span.innerText = parseInt(span.innerText) + 1;
-    }
+      <div class="posts" id="mediaPosts"></div>
+    </div>
 
-    function addComment(btn) {
-      let input = btn.parentNode.querySelector("input");
-      let text = input.value;
-      if(text.trim()!==""){
-        let comments = btn.parentNode.querySelector(".comments");
-        let p = document.createElement("p");
-        p.innerHTML = `<b>${guestName}:</b> ${text}`;
-        comments.appendChild(p);
-        input.value="";
+    <!-- Tab 2 -->
+    <div id="tab2" class="tab card" style="display:none">
+      <h2>2. Câu chuyện (viết + tải ảnh minh họa)</h2>
+      <div class="card">
+        <label>Tiêu đề:</label>
+        <input id="storyTitle" placeholder="Tiêu đề">
+        <label>Nội dung:</label>
+        <textarea id="storyContent" placeholder="Viết câu chuyện..."></textarea>
+        <label>Ảnh minh họa (1 ảnh):</label>
+        <input id="storyImage" type="file" accept="image/*">
+        <div style="margin-top:8px">
+          <button class="btn" onclick="addStory()">Đăng câu chuyện</button>
+          <button class="btn ghost" onclick="renderStories()">Làm mới</button>
+        </div>
+      </div>
+
+      <div class="posts" id="stories"></div>
+    </div>
+
+    <!-- Tab 3 -->
+    <div id="tab3" class="tab card" style="display:none">
+      <h2>3. Thông tin liên hệ (lưu & sửa)</h2>
+      <div class="card">
+        <label>Họ tên:</label>
+        <input id="contactName" placeholder="Họ tên">
+        <label>Số điện thoại:</label>
+        <input id="contactPhone" placeholder="0123456789" type="tel">
+        <label>Email:</label>
+        <input id="contactEmail" placeholder="mail@example.com" type="email">
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn" onclick="saveContact()">Lưu</button>
+          <button class="btn ghost" onclick="loadContact()">Tải lên ô</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Thông tin đã lưu</h3>
+        <div id="savedContact" class="small">Chưa có thông tin.</div>
+      </div>
+    </div>
+
+    <!-- Tab 4 -->
+    <div id="tab4" class="tab card" style="display:none">
+      <h2>4. Đánh giá website (1-5 sao) & bình luận</h2>
+      <div class="card">
+        <label>Chọn sao:</label>
+        <div id="stars" style="display:flex;gap:6px;margin-top:6px">
+          <span class="star" data-value="1">☆</span>
+          <span class="star" data-value="2">☆</span>
+          <span class="star" data-value="3">☆</span>
+          <span class="star" data-value="4">☆</span>
+          <span class="star" data-value="5">☆</span>
+        </div>
+        <label style="margin-top:8px">Bình luận:</label>
+        <textarea id="reviewComment" placeholder="Viết bình luận..."></textarea>
+        <label>Ảnh minh họa (tùy chọn):</label>
+        <input id="reviewImage" type="file" accept="image/*">
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn" onclick="addReview()">Gửi đánh giá</button>
+          <button class="btn ghost" onclick="renderReviews()">Làm mới</button>
+        </div>
+      </div>
+
+      <div class="posts" id="reviews"></div>
+    </div>
+
+    <!-- Settings -->
+    <div id="settings" class="tab card" style="display:none">
+      <h2>⚙️ Cài đặt (cần đăng nhập)</h2>
+      <div class="card">
+        <label>Tài khoản:</label>
+        <input id="loginUser" placeholder="Tên tài khoản">
+        <label>Mật khẩu:</label>
+        <input id="loginPass" placeholder="Mật khẩu" type="password">
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn" onclick="doLogin()">Đăng nhập</button>
+          <button class="btn ghost" onclick="doLogout()">Đăng xuất</button>
+        </div>
+        <div id="loginStatus" class="small" style="margin-top:8px;color:var(--muted)">Chưa đăng nhập</div>
+      </div>
+
+      <div class="card">
+        <label>Tiêu đề website:</label>
+        <input id="newTitle" placeholder="Tiêu đề mới...">
+        <label>Ảnh nền (URL):</label>
+        <input id="newBg" placeholder="Dán link ảnh nền...">
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn" onclick="applySettings()">Lưu cài đặt</button>
+        </div>
+        <div class="small" style="margin-top:8px">Lưu ý: chỉ người đã đăng nhập mới thay đổi được.</div>
+      </div>
+    </div>
+
+  </section>
+</main>
+
+<footer>
+  <div class="small">Mọi dữ liệu được lưu cục bộ trên trình duyệt (localStorage). Bạn có thể xóa bất kỳ mục nào hoặc xóa toàn bộ dữ liệu.</div>
+</footer>
+
+<script>
+/* ==== Utils ==== */
+const DB = {
+  media: 'wol_media_posts_v1',
+  stories: 'wol_stories_v1',
+  contact: 'wol_contact_v1',
+  reviews: 'wol_reviews_v1',
+  settings: 'wol_settings_v1',
+  defaultName: 'wol_default_name_v1',
+};
+const AUTH = { user: 'Toanh2212', pass: '22012000' };
+
+/* load/save local */
+function load(key){ try{ return JSON.parse(localStorage.getItem(key)||'null') }catch(e){ return null } }
+function save(key,val){ localStorage.setItem(key, JSON.stringify(val)) }
+
+/* Default inits */
+if(!load(DB.media)) save(DB.media, []);
+if(!load(DB.stories)) save(DB.stories, []);
+if(!load(DB.reviews)) save(DB.reviews, {});
+if(!load(DB.settings)) save(DB.settings,{title:document.getElementById('siteTitle').innerText, bg: ''});
+
+/* Navigation */
+document.querySelectorAll('#mainNav button').forEach(b=>{
+  b.addEventListener('click',()=> {
+    document.querySelectorAll('#mainNav button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.tab').forEach(t=>t.style.display='none');
+    const id = b.getAttribute('data-tab');
+    document.getElementById(id).style.display = 'block';
+    if(id==='tab1') renderMediaPosts();
+    if(id==='tab2') renderStories();
+    if(id==='tab3') loadContact();
+    if(id==='tab4') renderReviews();
+  })
+});
+
+/* ===== Default name save ===== */
+function saveDefaultName(){
+  const v = document.getElementById('defaultName').value.trim();
+  if(v) save(DB.defaultName, v);
+  alert('Lưu tên mặc định xong.');
+}
+
+/* Apply background quick */
+function applyBg(){
+  const url = document.getElementById('bgUrl').value.trim();
+  if(url) document.body.style.backgroundImage = `url('${url}')`;
+  const s = load(DB.settings) || {};
+  s.bg = url; save(DB.settings, s);
+  alert('Áp dụng nền.');
+}
+
+/* Clear all local data */
+function clearAll(){
+  if(!confirm('Xác nhận xóa toàn bộ dữ liệu local?')) return;
+  localStorage.removeItem(DB.media);
+  localStorage.removeItem(DB.stories);
+  localStorage.removeItem(DB.reviews);
+  localStorage.removeItem(DB.contact);
+  localStorage.removeItem(DB.defaultName);
+  localStorage.removeItem(DB.settings);
+  location.reload();
+}
+
+/* ========== TAB 1: Media posts ========== */
+function addMediaPost(){
+  const desc = document.getElementById('mediaDesc').value.trim();
+  const files = document.getElementById('mediaFiles').files;
+  if(!desc && files.length===0){ alert('Cần mô tả hoặc file'); return; }
+  const readers = [];
+  for(let f of files){
+    readers.push(new Promise((res,rej)=>{
+      const fr = new FileReader();
+      fr.onload = ()=> res({name:f.name, type:f.type, data:fr.result});
+      fr.onerror = rej;
+      fr.readAsDataURL(f);
+    }));
+  }
+  Promise.all(readers).then(arr=>{
+    const posts = load(DB.media) || [];
+    const post = {
+      id: Date.now() + Math.random().toString(36).slice(2,7),
+      desc, files: arr, created: new Date().toISOString(),
+      likes:0, dislikes:0, comments:[]
+    };
+    posts.unshift(post);
+    save(DB.media, posts);
+    document.getElementById('mediaDesc').value = '';
+    document.getElementById('mediaFiles').value = '';
+    renderMediaPosts();
+  }).catch(e=>{ alert('Lỗi đọc file'); console.error(e) });
+}
+
+function renderMediaPosts(){
+  const container = document.getElementById('mediaPosts');
+  container.innerHTML = '';
+  const posts = load(DB.media) || [];
+  for(let p of posts){
+    const div = document.createElement('div'); div.className='card post';
+    let html = `<div class="meta"><strong>${new Date(p.created).toLocaleString()}</strong></div>`;
+    html += `<p>${escapeHtml(p.desc)}</p>`;
+    if(p.files && p.files.length){
+      html+= `<div class="media">`;
+      for(let f of p.files){
+        if(f.type.startsWith('image')) html += `<img class="preview" src="${f.data}" alt="${escapeHtml(f.name)}">`;
+        else if(f.type.startsWith('video')) html += `<video controls src="${f.data}"></video>`;
+      }
+      html+= `</div>`;
+    }
+    html += `<div class="actions">
+      <div class="flex-row">
+        <div class="like" onclick="likeMedia('${p.id}',1)">👍 <span id="mlike-${p.id}">${p.likes}</span></div>
+        <div class="dislike" onclick="likeMedia('${p.id}',-1)">👎 <span id="mdis-${p.id}">${p.dislikes}</span></div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:6px">
+        <button class="btn ghost" onclick="deleteMedia('${p.id}')">Xóa</button>
+        <button class="btn ghost" onclick="editMedia('${p.id}')">Sửa mô tả</button>
+      </div>
+    </div>`;
+    html += `<div class="comments" id="mcomments-${p.id}">`;
+    if(p.comments && p.comments.length){
+      for(let c of p.comments){
+        html += `<div class="comment"><div><b>${escapeHtml(c.name||getDefaultName())}</b>: ${escapeHtml(c.text)}</div>
+                 <div><span class="small">${new Date(c.t).toLocaleString()}</span>&nbsp; <span class="danger" onclick="deleteComment('${p.id}','${c.id}','media')">Xóa</span></div></div>`;
       }
     }
+    html += `<div style="margin-top:8px" class="flex-row"><input placeholder="Tên (tùy ý)" id="cname-${p.id}" style="flex:0 0 160px"><input placeholder="Viết bình luận..." id="ct-${p.id}" style="flex:1"><button class="btn" onclick="addCommentTo('${p.id}','media')">Gửi</button></div></div>`;
+    div.innerHTML = html;
+    container.appendChild(div);
+  }
+}
 
-    // Mục 4: Apply Settings
-    function applySettings() {
-      const newTitle = document.getElementById("siteNameInput").value;
-      const newGuest = document.getElementById("guestNameInput").value;
-      const bg1 = document.getElementById("bgTab1").value;
-      const bg2 = document.getElementById("bgTab2").value;
-      const bg3 = document.getElementById("bgTab3").value;
+/* helpers media actions */
+function likeMedia(id,delta){
+  const posts = load(DB.media)||[];
+  const p = posts.find(x=>x.id===id); if(!p) return;
+  if(delta>0) p.likes++;
+  else p.dislikes++;
+  save(DB.media, posts);
+  document.getElementById(`mlike-${id}`).innerText = p.likes;
+  document.getElementById(`mdis-${id}`).innerText = p.dislikes;
+}
+function deleteMedia(id){
+  if(!confirm('Xác nhận xóa bài đăng này?')) return;
+  let posts = load(DB.media)||[];
+  posts = posts.filter(p=>p.id!==id);
+  save(DB.media, posts);
+  renderMediaPosts();
+}
+function editMedia(id){
+  const posts = load(DB.media)||[]; const p = posts.find(x=>x.id===id);
+  const newd = prompt('Sửa mô tả:', p.desc||'') || p.desc;
+  p.desc = newd;
+  save(DB.media, posts);
+  renderMediaPosts();
+}
+function addCommentTo(id, type){
+  const nameEl = document.getElementById(`cname-${id}`);
+  const txtEl = document.getElementById(`ct-${id}`);
+  const name = (nameEl && nameEl.value.trim()) || getDefaultName() || 'Khách';
+  const text = txtEl.value.trim();
+  if(!text) return alert('Viết bình luận trước');
+  const posts = load(type=== 'media' ? DB.media : DB.stories) || [];
+  const p = posts.find(x=>x.id===id);
+  if(!p) return;
+  const comment = { id: Date.now()+Math.random().toString(36).slice(2,6), name, text, t: new Date().toISOString() };
+  p.comments = p.comments || []; p.comments.push(comment);
+  save(type==='media'?DB.media:DB.stories, posts);
+  renderMediaPosts();
+}
+function deleteComment(postId, commentId, type){
+  if(!confirm('Xóa bình luận?')) return;
+  const key = type==='media'?DB.media:DB.stories;
+  const posts = load(key)||[];
+  const p = posts.find(x=>x.id===postId);
+  if(!p) return;
+  p.comments = (p.comments||[]).filter(c=>c.id!==commentId);
+  save(key, posts);
+  if(type==='media') renderMediaPosts(); else renderStories();
+}
+function getDefaultName(){ return load(DB.defaultName) || 'Người lạ' }
 
-      if(newTitle.trim()!=="") document.getElementById("siteTitle").innerText = newTitle;
-      if(newGuest.trim()!=="") guestName = newGuest;
-      if(bg1.trim()!=="") document.getElementById("tab1").style.background = `url('${bg1}') center/cover no-repeat`;
-      if(bg2.trim()!=="") document.getElementById("tab2").style.background = `url('${bg2}') center/cover no-repeat`;
-      if(bg3.trim()!=="") document.getElementById("tab3").style.background = `url('${bg3}') center/cover no-repeat`;
-
-      alert("✅ Cập nhật thành công!");
+/* ========== TAB 2: Stories ========== */
+function addStory(){
+  const t = document.getElementById('storyTitle').value.trim();
+  const c = document.getElementById('storyContent').value.trim();
+  if(!t || !c){ alert('Cần tiêu đề và nội dung'); return; }
+  const f = document.getElementById('storyImage').files[0];
+  if(f){
+    const fr = new FileReader();
+    fr.onload = ()=>{
+      pushStory(t,c,{name:f.name,type:f.type,data:fr.result});
+    };
+    fr.readAsDataURL(f);
+  } else {
+    pushStory(t,c,null);
+  }
+}
+function pushStory(title,content,img){
+  const stories = load(DB.stories) || [];
+  const s = { id: Date.now()+Math.random().toString(36).slice(2,6), title, content, img, created:new Date().toISOString(), likes:0, dislikes:0, comments:[] };
+  stories.unshift(s); save(DB.stories, stories);
+  document.getElementById('storyTitle').value=''; document.getElementById('storyContent').value=''; document.getElementById('storyImage').value='';
+  renderStories();
+}
+function renderStories(){
+  const container = document.getElementById('stories'); container.innerHTML='';
+  const stories = load(DB.stories)||[];
+  for(let s of stories){
+    const d = document.createElement('div'); d.className='card';
+    let html = `<div class="meta"><strong>${escapeHtml(s.title)}</strong> <span class="small"> - ${new Date(s.created).toLocaleString()}</span></div>`;
+    html += `<p>${escapeHtml(s.content)}</p>`;
+    if(s.img) html += `<img class="preview" src="${s.img.data}" alt="${escapeHtml(s.img.name)}">`;
+    html += `<div class="actions"><div class="flex-row"><div class="like" onclick="likeStory('${s.id}',1)">👍 <span id="slike-${s.id}">${s.likes}</span></div>
+             <div class="dislike" onclick="likeStory('${s.id}',-1)">👎 <span id="sdis-${s.id}">${s.dislikes}</span></div></div>
+             <div style="margin-left:auto;display:flex;gap:6px">
+               <button class="btn ghost" onclick="deleteStory('${s.id}')">Xóa</button>
+               <button class="btn ghost" onclick="editStory('${s.id}')">Sửa</button>
+             </div></div>`;
+    html += `<div class="comments">`;
+    if(s.comments && s.comments.length) for(let c of s.comments){
+      html += `<div class="comment"><div><b>${escapeHtml(c.name||getDefaultName())}</b>: ${escapeHtml(c.text)}</div><div><span class="small">${new Date(c.t).toLocaleString()}</span>&nbsp;<span class="danger" onclick="deleteComment('${s.id}','${c.id}','story')">Xóa</span></div></div>`;
     }
-  </script>
+    html += `<div style="margin-top:8px" class="flex-row"><input id="sname-${s.id}" placeholder="Tên (tùy ý)" style="flex:0 0 160px"><input id="st-${s.id}" placeholder="Bình luận..." style="flex:1"><button class="btn" onclick="addCommentTo('${s.id}','story')">Gửi</button></div></div>`;
+    d.innerHTML = html;
+    container.appendChild(d);
+  }
+}
+function likeStory(id,delta){
+  const arr = load(DB.stories)||[]; const s = arr.find(x=>x.id===id); if(!s) return;
+  if(delta>0) s.likes++; else s.dislikes++; save(DB.stories,arr);
+  document.getElementById(`slike-${id}`).innerText = s.likes; document.getElementById(`sdis-${id}`).innerText = s.dislikes;
+}
+function deleteStory(id){
+  if(!confirm('Xác nhận xóa câu chuyện?')) return;
+  let a = load(DB.stories)||[]; a = a.filter(x=>x.id!==id); save(DB.stories,a); renderStories();
+}
+function editStory(id){
+  const a = load(DB.stories)||[]; const s = a.find(x=>x.id===id);
+  const nt = prompt('Sửa tiêu đề:', s.title)||s.title;
+  const nc = prompt('Sửa nội dung:', s.content)||s.content;
+  s.title = nt; s.content = nc; save(DB.stories,a); renderStories();
+}
+
+/* ========== TAB 3: Contact ========== */
+function saveContact(){
+  const name = document.getElementById('contactName').value.trim();
+  const phone = document.getElementById('contactPhone').value.trim();
+  const email = document.getElementById('contactEmail').value.trim();
+  if(!name){ alert('Nhập họ tên'); return; }
+  const obj = { name, phone, email, saved: new Date().toISOString() };
+  save(DB.contact, obj);
+  renderContact(obj);
+  alert('Đã lưu thông tin.');
+}
+function loadContact(){
+  const c = load(DB.contact);
+  if(c){
+    document.getElementById('contactName').value = c.name||'';
+    document.getElementById('contactPhone').value = c.phone||'';
+    document.getElementById('contactEmail').value = c.email||'';
+    renderContact(c);
+  } else {
+    document.getElementById('savedContact').innerText = 'Chưa có thông tin.';
+  }
+}
+function renderContact(c){
+  const el = document.getElementById('savedContact');
+  el.innerHTML = `<div><b>${escapeHtml(c.name)}</b></div><div class="small">Phone: ${escapeHtml(c.phone||'-')}</div><div class="small">Email: ${escapeHtml(c.email||'-')}</div><div class="small">Lưu: ${new Date(c.saved).toLocaleString()}</div>
+  <div style="margin-top:8px"><button class="btn ghost" onclick="deleteContact()">Xóa</button></div>`;
+}
+function deleteContact(){ if(confirm('Xóa thông tin liên hệ?')){ localStorage.removeItem(DB.contact); loadContact(); }}
+
+/* ========== TAB 4: Reviews ========== */
+let selectedStars = 0;
+document.querySelectorAll('#stars .star').forEach(s=>{
+  s.addEventListener('click',()=>{
+    selectedStars = Number(s.dataset.value);
+    highlightStars(selectedStars);
+  });
+});
+function highlightStars(n){
+  document.querySelectorAll('#stars .star').forEach(s=> s.textContent = (Number(s.dataset.value)<=n ? '★' : '☆'));
+}
+function addReview(){
+  const comment = document.getElementById('reviewComment').value.trim();
+  const file = document.getElementById('reviewImage').files[0];
+  if(selectedStars<=0) return alert('Chọn từ 1 đến 5 sao');
+  const finalize = (imgData)=>{
+    const reviews = load(DB.reviews) || { list: [] };
+    const r = { id: Date.now()+Math.random().toString(36).slice(2,6), stars:selectedStars, comment, img:imgData, created:new Date().toISOString(), comments:[], likes:0, dislikes:0 };
+    reviews.list.unshift(r); save(DB.reviews, reviews); document.getElementById('reviewComment').value=''; document.getElementById('reviewImage').value=''; selectedStars=0; highlightStars(0); renderReviews();
+  };
+  if(file){
+    const fr = new FileReader(); fr.onload = ()=> finalize({name:file.name,type:file.type,data:fr.result}); fr.readAsDataURL(file);
+  } else finalize(null);
+}
+function renderReviews(){
+  const container = document.getElementById('reviews'); container.innerHTML='';
+  const data = load(DB.reviews) || { list: [] };
+  for(let r of (data.list||[])){
+    const d = document.createElement('div'); d.className='card';
+    let html = `<div class="meta"><strong>${'★'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</strong> <span class="small"> - ${new Date(r.created).toLocaleString()}</span></div>`;
+    html += `<p>${escapeHtml(r.comment||'')}</p>`;
+    if(r.img) html += `<img class="preview" src="${r.img.data}" alt="${escapeHtml(r.img.name)}">`;
+    html += `<div class="actions"><div class="flex-row"><div class="like" onclick="likeReview('${r.id}',1)">👍 <span id="rlike-${r.id}">${r.likes}</span></div>
+             <div class="dislike" onclick="likeReview('${r.id}',-1)">👎 <span id="rdis-${r.id}">${r.dislikes}</span></div></div>
+             <div style="margin-left:auto;display:flex;gap:6px"><button class="btn ghost" onclick="deleteReview('${r.id}')">Xóa</button></div></div>`;
+    html += `<div class="comments">`;
+    if(r.comments && r.comments.length) for(let c of r.comments){
+      html += `<div class="comment"><div><b>${escapeHtml(c.name||getDefaultName())}</b>: ${escapeHtml(c.text)}</div><div><span class="small">${new Date(c.t).toLocaleString()}</span>&nbsp;<span class="danger" onclick="deleteReviewComment('${r.id}','${c.id}')">Xóa</span></div></div>`;
+    }
+    html += `<div style="margin-top:8px" class="flex-row"><input id="rname-${r.id}" placeholder="Tên (tùy ý)" style="flex:0 0 160px"><input id="rt-${r.id}" placeholder="Bình luận..." style="flex:1"><button class="btn" onclick="addReviewComment('${r.id}')">Gửi</button></div></div>`;
+    d.innerHTML = html; container.appendChild(d);
+  }
+}
+function likeReview(id,delta){ const db = load(DB.reviews)||{list:[]}; const r = (db.list||[]).find(x=>x.id===id); if(!r) return; if(delta>0) r.likes++; else r.dislikes++; save(DB.reviews,db); document.getElementById(`rlike-${id}`).innerText=r.likes; document.getElementById(`rdis-${id}`).innerText=r.dislikes; }
+function deleteReview(id){ if(!confirm('Xóa đánh giá?')) return; const db=load(DB.reviews)||{list:[]}; db.list=db.list.filter(x=>x.id!==id); save(DB.reviews,db); renderReviews(); }
+function addReviewComment(rid){ const nameEl=document.getElementById(`rname-${rid}`); const txtEl=document.getElementById(`rt-${rid}`); const name=(nameEl.value.trim())||getDefaultName(); const text=txtEl.value.trim(); if(!text) return alert('Viết bình luận'); const db=load(DB.reviews)||{list:[]}; const r=db.list.find(x=>x.id===rid); if(!r) return; const c={id:Date.now()+Math.random().toString(36).slice(2,6), name, text, t:new Date().toISOString()}; r.comments.push(c); save(DB.reviews,db); renderReviews(); }
+function deleteReviewComment(rid,cid){ if(!confirm('Xóa bình luận?')) return; const db=load(DB.reviews)||{list:[]}; const r=db.list.find(x=>x.id===rid); if(!r) return; r.comments=r.comments.filter(x=>x.id!==cid); save(DB.reviews,db); renderReviews(); }
+
+/* ========== Settings (auth) ========== */
+function doLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if(u===AUTH.user && p===AUTH.pass){
+    sessionStorage.setItem('wol_logged','1');
+    document.getElementById('loginStatus').innerText = 'Đã đăng nhập';
+    alert('Đăng nhập thành công');
+  } else {
+    alert('Sai tài khoản hoặc mật khẩu');
+  }
+}
+function doLogout(){
+  sessionStorage.removeItem('wol_logged'); document.getElementById('loginStatus').innerText='Chưa đăng nhập'; alert('Đã đăng xuất');
+}
+function isLogged(){ return sessionStorage.getItem('wol_logged')==='1' }
+
+function applySettings(){
+  if(!isLogged()){ return alert('Cần đăng nhập để thay đổi'); }
+  const title = document.getElementById('newTitle').value.trim();
+  const bg = document.getElementById('newBg').value.trim();
+  const s = load(DB.settings) || {};
+  if(title){ s.title = title; document.getElementById('siteTitle').innerText = title; }
+  if(bg){ s.bg = bg; document.body.style.backgroundImage = `url('${bg}')`; }
+  save(DB.settings, s);
+  alert('Cài đặt lưu xong');
+}
+
+/* ========== small helpers ========== */
+function escapeHtml(t){ if(!t) return ''; return t.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;') }
+
+/* init UI on load */
+(function init(){
+  // apply saved settings
+  const s = load(DB.settings);
+  if(s){
+    if(s.title) document.getElementById('siteTitle').innerText = s.title;
+    if(s.bg) document.body.style.backgroundImage = `url('${s.bg}')`;
+  }
+  // default name
+  const dn = load(DB.defaultName); if(dn) document.getElementById('defaultName').value = dn;
+  // render initial lists
+  renderMediaPosts();
+  renderStories();
+  renderReviews();
+  loadContact();
+})();
+</script>
 </body>
 </html>
+
