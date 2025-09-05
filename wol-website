@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Website của Wol</title>
+  <style>
+    body {
+      margin: 0; font-family: Arial, sans-serif; 
+      background: #001a1a url('https://i.ibb.co/5Mpr9K1/leaves-bg.jpg') center/cover fixed;
+      color: #fff;
+    }
+    header {
+      background: #001d3d; padding: 15px; text-align: center;
+    }
+    nav {
+      display: flex; justify-content: center; background: #003566;
+    }
+    nav a {
+      color: #fff; padding: 12px 20px; text-decoration: none;
+    }
+    nav a:hover { background: #00509d; }
+    section { display: none; padding: 20px; min-height: 85vh; }
+    section.active { display: block; }
+    .post {
+      background: rgba(0,0,0,0.6); margin: 10px 0; padding: 10px; border-radius: 8px;
+    }
+    .btn { padding: 6px 12px; background: #0077b6; border: none; color: #fff; border-radius: 6px; cursor: pointer; }
+    .btn:hover { background: #0096c7; }
+    .like, .dislike, .love { cursor: pointer; margin-right: 8px; }
+    .comment-box { margin-top: 5px; }
+    input, textarea, select {
+      padding: 6px; margin: 5px 0; width: 100%;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="siteTitle">🌿 Website của Wol</h1>
+  </header>
+  <nav>
+    <a href="#" onclick="showTab('tab1')">1. Ảnh & Video</a>
+    <a href="#" onclick="showTab('tab3')">2. Thông tin cá nhân</a>
+    <a href="#" onclick="showTab('tab4')">3. Đánh giá Website</a>
+    <a href="#" onclick="showTab('settings')">⚙️ Cài đặt</a>
+  </nav>
+
+  <!-- Tab 1: Ảnh & Video -->
+  <section id="tab1" class="active">
+    <h2>📸 Upload Ảnh & Video</h2>
+    <input type="file" id="mediaFile" multiple accept="image/*,video/*">
+    <textarea id="mediaNote" placeholder="Mô tả cho bài đăng..."></textarea>
+    <button class="btn" onclick="addMedia()">Đăng</button>
+    <div id="mediaList"></div>
+  </section>
+
+  <!-- Tab 3: Thông tin cá nhân -->
+  <section id="tab3">
+    <h2>👤 Thông tin cá nhân</h2>
+    <input type="text" id="name" placeholder="Họ và tên">
+    <input type="text" id="phone" placeholder="Số điện thoại">
+    <input type="email" id="email" placeholder="Gmail">
+    <button class="btn" onclick="saveProfile()">Lưu</button>
+    <div id="profileDisplay"></div>
+  </section>
+
+  <!-- Tab 4: Đánh giá Website -->
+  <section id="tab4">
+    <h2>⭐ Đánh giá Website</h2>
+    <select id="rating">
+      <option value="1">1 sao</option>
+      <option value="2">2 sao</option>
+      <option value="3">3 sao</option>
+      <option value="4">4 sao</option>
+      <option value="5">5 sao</option>
+    </select>
+    <textarea id="reviewText" placeholder="Nhận xét..."></textarea>
+    <input type="file" id="reviewFile" accept="image/*">
+    <button class="btn" onclick="addReview()">Gửi</button>
+    <div id="reviewList"></div>
+  </section>
+
+  <!-- Cài đặt -->
+  <section id="settings">
+    <h2>⚙️ Cài đặt Website</h2>
+    <div id="loginBox">
+      <input type="text" id="username" placeholder="Tài khoản">
+      <input type="password" id="password" placeholder="Mật khẩu">
+      <button class="btn" onclick="login()">Đăng nhập</button>
+    </div>
+    <div id="settingsBox" class="hidden">
+      <input type="text" id="newTitle" placeholder="Tên website mới">
+      <input type="file" id="bgFile" accept="image/*">
+      <button class="btn" onclick="applySettings()">Áp dụng</button>
+      <hr>
+      <button class="btn" onclick="exportData()">📤 Xuất dữ liệu</button>
+      <input type="file" id="importFile" onchange="importData(event)">
+    </div>
+  </section>
+
+  <script>
+    let data = JSON.parse(localStorage.getItem("wolData") || `{
+      "media": [], "profile": {}, "reviews": []
+    }`);
+
+    function save() { localStorage.setItem("wolData", JSON.stringify(data)); }
+
+    function showTab(id) {
+      document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      render();
+    }
+
+    // Tab1: Media
+    function addMedia(){
+      let files=document.getElementById("mediaFile").files;
+      let note=document.getElementById("mediaNote").value;
+      if(files.length===0 && !note.trim()) return;
+      let post={note:note, files:[], comments:[], likes:0, dislikes:0, loves:0};
+      for(let f of files){
+        let url=URL.createObjectURL(f);
+        post.files.push({type:f.type.startsWith("image")?"img":"video",url});
+      }
+      data.media.unshift(post); save(); render();
+      document.getElementById("mediaNote").value=""; document.getElementById("mediaFile").value="";
+    }
+    function renderMedia(){
+      let box=document.getElementById("mediaList"); box.innerHTML="";
+      data.media.forEach((m,i)=>{
+        let div=document.createElement("div"); div.className="post";
+        div.innerHTML=`<p>${m.note||""}</p>`+
+          m.files.map(f=>f.type==="img"?`<img src="${f.url}" width="200">`:`<video src="${f.url}" width="200" controls></video>`).join("")+
+          `<br>
+          <span class="like" onclick="likeMedia(${i})">👍 ${m.likes}</span>
+          <span class="dislike" onclick="dislikeMedia(${i})">👎 ${m.dislikes}</span>
+          <span class="love" onclick="loveMedia(${i})">❤️ ${m.loves}</span>
+          <button class="btn" onclick="deleteMedia(${i})">Xóa</button>
+          <div class="comment-box">
+            <input type="text" id="cmtName${i}" placeholder="Tên">
+            <input type="text" id="cmtInput${i}" placeholder="Bình luận...">
+            <button class="btn" onclick="addComment(${i})">Gửi</button>
+            <div>${m.comments.map((c,j)=>`<p><b>${c.name}:</b> ${c.text}
+              <span onclick="likeComment(${i},${j})">👍 ${c.likes}</span>
+              <span onclick="dislikeComment(${i},${j})">👎 ${c.dislikes}</span>
+              <span onclick="loveComment(${i},${j})">❤️ ${c.loves}</span>
+              <button onclick="deleteComment(${i},${j})">X</button></p>`).join("")}</div>
+          </div>`;
+        box.appendChild(div);
+      });
+    }
+    function likeMedia(i){data.media[i].likes++;save();renderMedia();}
+    function dislikeMedia(i){data.media[i].dislikes++;save();renderMedia();}
+    function loveMedia(i){data.media[i].loves++;save();renderMedia();}
+    function deleteMedia(i){data.media.splice(i,1);save();renderMedia();}
+    function addComment(i){
+      let name=document.getElementById("cmtName"+i).value||"Khách";
+      let text=document.getElementById("cmtInput"+i).value;
+      if(!text.trim())return;
+      data.media[i].comments.push({name,text,likes:0,dislikes:0,loves:0});
+      save(); renderMedia();
+    }
+    function likeComment(i,j){data.media[i].comments[j].likes++;save();renderMedia();}
+    function dislikeComment(i,j){data.media[i].comments[j].dislikes++;save();renderMedia();}
+    function loveComment(i,j){data.media[i].comments[j].loves++;save();renderMedia();}
+    function deleteComment(i,j){data.media[i].comments.splice(j,1);save();renderMedia();}
+
+    // Tab3: Profile
+    function saveProfile(){
+      data.profile={name:document.getElementById("name").value,
+                    phone:document.getElementById("phone").value,
+                    email:document.getElementById("email").value};
+      save(); renderProfile();
+    }
+    function renderProfile(){
+      let p=data.profile||{}; 
+      document.getElementById("profileDisplay").innerHTML=
+        `<p><b>Họ tên:</b> ${p.name||""}</p>
+         <p><b>SĐT:</b> ${p.phone||""}</p>
+         <p><b>Gmail:</b> ${p.email||""}</p>`;
+      document.getElementById("name").value=p.name||"";
+      document.getElementById("phone").value=p.phone||"";
+      document.getElementById("email").value=p.email||"";
+    }
+
+    // Tab4: Reviews
+    function addReview(){
+      let star=document.getElementById("rating").value;
+      let text=document.getElementById("reviewText").value;
+      let file=document.getElementById("reviewFile").files[0];
+      let url=file?URL.createObjectURL(file):null;
+      let r={star,text,file:url,likes:0,dislikes:0,loves:0};
+      data.reviews.unshift(r); save(); renderReviews();
+      document.getElementById("reviewText").value=""; document.getElementById("reviewFile").value="";
+    }
+    function renderReviews(){
+      let box=document.getElementById("reviewList"); box.innerHTML="";
+      data.reviews.forEach((r,i)=>{
+        let div=document.createElement("div"); div.className="post";
+        div.innerHTML=`<p>⭐ ${r.star} sao</p><p>${r.text}</p>`+
+          (r.file?`<img src="${r.file}" width="200">`:"")+`<br>
+          <span onclick="likeReview(${i})">👍 ${r.likes}</span>
+          <span onclick="dislikeReview(${i})">👎 ${r.dislikes}</span>
+          <span onclick="loveReview(${i})">❤️ ${r.loves}</span>
+          <button class="btn" onclick="deleteReview(${i})">Xóa</button>`;
+        box.appendChild(div);
+      });
+    }
+    function likeReview(i){data.reviews[i].likes++;save();renderReviews();}
+    function dislikeReview(i){data.reviews[i].dislikes++;save();renderReviews();}
+    function loveReview(i){data.reviews[i].loves++;save();renderReviews();}
+    function deleteReview(i){data.reviews.splice(i,1);save();renderReviews();}
+
+    // Settings
+    function login(){
+      let u=document.getElementById("username").value;
+      let p=document.getElementById("password").value;
+      if(u==="Toanh2212"&&p==="22012000"){
+        document.getElementById("loginBox").classList.add("hidden");
+        document.getElementById("settingsBox").classList.remove("hidden");
+      } else { alert("Sai tài khoản hoặc mật khẩu!"); }
+    }
+    function applySettings(){
+      let t=document.getElementById("newTitle").value;
+      if(t){document.getElementById("siteTitle").innerText=t;}
+      let f=document.getElementById("bgFile").files[0];
+      if(f){document.body.style.background=`url(${URL.createObjectURL(f)}) center/cover fixed`;}
+    }
+
+    // Backup
+    function exportData(){
+      let blob=new Blob([JSON.stringify(data)],{type:"application/json"});
+      let a=document.createElement("a");
+      a.href=URL.createObjectURL(blob);
+      a.download="backup.json";
+      a.click();
+    }
+    function importData(e){
+      let file=e.target.files[0];
+      let reader=new FileReader();
+      reader.onload=function(ev){
+        data=JSON.parse(ev.target.result); save(); render();
+      }
+      reader.readAsText(file);
+    }
+
+    // Render
+    function render(){renderMedia();renderProfile();renderReviews();}
+    render();
+  </script>
+</body>
+</html>
