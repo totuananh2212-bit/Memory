@@ -1,186 +1,252 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Mini Soccer 3D</title>
+  <meta charset="UTF-8">
+  <title>⚽ Mini Soccer 2D</title>
   <style>
-    body { margin: 0; overflow: hidden; background: #222; }
-    canvas { display: block; }
+    body { margin:0; background:#111; font-family: Arial; }
+    canvas { display:block; margin:0 auto; background:#006400; }
     #menu {
-      position: absolute; top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: #333; padding: 20px; border-radius: 10px;
-      color: white; font-family: Arial; text-align: center;
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      background:#222; color:white; padding:20px; border-radius:10px;
+      text-align:center; width:350px;
     }
-    #menu label { display:block; margin: 10px 0 5px; }
+    #menu label { display:block; margin-top:10px; }
     #scoreboard {
-      position: absolute; top: 10px; left: 50%;
-      transform: translateX(-50%);
-      color: white; font-family: Arial; font-size: 20px;
-      display: none;
+      position:absolute; top:10px; left:50%; transform:translateX(-50%);
+      color:white; font-size:18px; display:none;
+    }
+    #pauseScreen {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      color:white; font-size:28px; display:none;
     }
   </style>
 </head>
 <body>
   <div id="menu">
-    <h2>⚽ Mini Soccer 3D</h2>
-    <label>Tên cầu thủ:</label>
-    <input type="text" id="playerName" value="Player 1">
-    <label>Màu áo:</label>
-    <input type="color" id="playerColor" value="#0000ff">
-    <label>Thời gian (phút):</label>
+    <h2>⚽ Mini Soccer 2D</h2>
+    <label>Tên đội A:</label><input type="text" id="teamA" value="Team A">
+    <label>Tên đội B:</label><input type="text" id="teamB" value="Team B">
+    <label>Màu áo A:</label><input type="color" id="colorA" value="#0000ff">
+    <label>Màu áo B:</label><input type="color" id="colorB" value="#ff0000">
+    <label>Thời gian trận:</label>
     <select id="matchTime">
       <option value="60">1 phút</option>
       <option value="180" selected>3 phút</option>
       <option value="300">5 phút</option>
     </select>
+    <label>Sơ đồ:</label>
+    <select id="formation">
+      <option value="1-1-2-1">1-1-2-1</option>
+      <option value="1-2-2">1-2-2</option>
+      <option value="1-1-3">1-1-3</option>
+      <option value="1-3-1">1-3-1</option>
+      <option value="1-2-1-1">1-2-1-1</option>
+    </select>
     <br><br>
-    <button onclick="startGame()">Start Game</button>
+    <button onclick="startGame()">Start Match</button>
+    <p style="font-size:12px;color:#bbb;text-align:left">
+      ⚽ Điều khiển:<br>
+      D = sút / tranh bóng<br>
+      S = chuyền sệt<br>
+      A = chuyền bổng / xoạc<br>
+      W = chọc khe<br>
+      Q/C = skill qua người<br>
+      E = chạy nhanh<br>
+      P = tạm dừng<br>
+      Mũi tên / WASD = di chuyển
+    </p>
   </div>
-  <div id="scoreboard">Time: 180 | Score 0 - 0</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.154/build/three.min.js"></script>
-  <script>
-    let scene, camera, renderer, ball, player, keeper1, keeper2;
-    let keys = {}, ballVel = new THREE.Vector3();
-    let time, scoreA=0, scoreB=0;
-    let playerName="Player", playerColor=0x0000ff;
+  <div id="scoreboard">Time: 0 | 0 - 0</div>
+  <div id="pauseScreen">⏸ Paused</div>
 
-    function startGame() {
-      // lấy thông tin từ menu
-      playerName = document.getElementById("playerName").value || "Player";
-      playerColor = new THREE.Color(document.getElementById("playerColor").value);
-      time = parseInt(document.getElementById("matchTime").value);
+  <canvas id="gameCanvas" width="900" height="550"></canvas>
 
-      document.getElementById("menu").style.display = "none";
-      document.getElementById("scoreboard").style.display = "block";
+  <audio id="crowd" loop>
+    <source src="https://actions.google.com/sounds/v1/crowds/stadium_cheer.ogg" type="audio/ogg">
+  </audio>
+  <audio id="kick">
+    <source src="https://actions.google.com/sounds/v1/sports/football_kick.ogg" type="audio/ogg">
+  </audio>
+  <audio id="whistle">
+    <source src="https://actions.google.com/sounds/v1/sports/referee_whistle.ogg" type="audio/ogg">
+  </audio>
 
-      init();
-      animate();
-      setInterval(()=>{ if(time>0) time--; },1000);
-    }
-
-    function init() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-      camera.position.set(0,50,70);
-      camera.lookAt(0,0,0);
-
-      renderer = new THREE.WebGLRenderer({antialias:true});
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      document.body.appendChild(renderer.domElement);
-
-      const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(20,50,20);
-      scene.add(light);
-      scene.add(new THREE.AmbientLight(0x888888));
-
-      // sân
-      const field = new THREE.Mesh(
-        new THREE.PlaneGeometry(100,60),
-        new THREE.MeshPhongMaterial({color:0x228B22})
-      );
-      field.rotation.x = -Math.PI/2;
-      scene.add(field);
-
-      // gôn
-      const goalMat = new THREE.MeshPhongMaterial({color:0xffffff});
-      const goal1 = new THREE.Mesh(new THREE.BoxGeometry(1,10,20), goalMat);
-      goal1.position.set(-50,5,0);
-      scene.add(goal1);
-      const goal2 = goal1.clone();
-      goal2.position.set(50,5,0);
-      scene.add(goal2);
-
-      // bóng
-      ball = new THREE.Mesh(
-        new THREE.SphereGeometry(1,16,16),
-        new THREE.MeshPhongMaterial({color:0xffffff})
-      );
-      ball.position.set(0,1,0);
-      scene.add(ball);
-
-      // cầu thủ
-      player = createPlayer(playerColor, 0, 0, playerName);
-      keeper1 = createPlayer(0xff0000, -45,0,"GK Red");
-      keeper2 = createPlayer(0x00ff00, 45,0,"GK Green");
-
-      document.addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
-      document.addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
-
-      window.addEventListener('resize', ()=>{
-        camera.aspect = window.innerWidth/window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-      });
-    }
-
-    function createPlayer(color, x, z, name="Player") {
-      const mat = new THREE.MeshPhongMaterial({color:color});
-      const body = new THREE.Mesh(new THREE.BoxGeometry(2,4,2), mat);
-      body.position.set(x,2,z);
-      scene.add(body);
-
-      // text label (tên cầu thủ)
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      ctx.font = '20px Arial'; ctx.fillStyle = 'white';
-      ctx.fillText(name, 10, 30);
-      const tex = new THREE.CanvasTexture(canvas);
-      const labelMat = new THREE.SpriteMaterial({map: tex});
-      const label = new THREE.Sprite(labelMat);
-      label.scale.set(10,5,1);
-      body.add(label);
-      label.position.set(0,6,0);
-
-      return body;
-    }
-
-    function resetBall() {
-      ball.position.set(0,1,0);
-      ballVel.set(0,0,0);
-    }
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      // di chuyển cầu thủ
-      let speed = keys['e'] ? 0.4 : 0.2;
-      if(keys['arrowup']||keys['w']) player.position.z -= speed;
-      if(keys['arrowdown']||keys['s']) player.position.z += speed;
-      if(keys['arrowleft']||keys['a']) player.position.x -= speed;
-      if(keys['arrowright']||keys['d']) player.position.x += speed;
-
-      // D = sút
-      if(keys['d']) {
-        if(player.position.distanceTo(ball.position)<3) {
-          const dir = new THREE.Vector3().subVectors(ball.position, player.position).normalize();
-          ballVel.add(dir.multiplyScalar(0.8));
-        }
-      }
-
-      // bóng vật lý đơn giản
-      ball.position.add(ballVel);
-      ballVel.multiplyScalar(0.98);
-      if(ball.position.y < 1) ball.position.y = 1;
-
-      // ghi bàn
-      if(ball.position.x < -49 && Math.abs(ball.position.z)<10) { scoreB++; resetBall(); }
-      if(ball.position.x > 49 && Math.abs(ball.position.z)<10) { scoreA++; resetBall(); }
-
-      // AI thủ môn
-      keeper1.position.z = THREE.MathUtils.clamp(ball.position.z, -8, 8);
-      keeper2.position.z = THREE.MathUtils.clamp(ball.position.z, -8, 8);
-
-      // cập nhật scoreboard
-      document.getElementById("scoreboard").innerText =
-        `Time: ${time} | Score ${scoreA} - ${scoreB}`;
-
-      renderer.render(scene, camera);
-    }
-  </script>
+  <script src="game.js"></script>
 </body>
 </html>
+const canvas=document.getElementById("gameCanvas");
+const ctx=canvas.getContext("2d");
+let keys={};
+let playersA=[], playersB=[], ball, timeLeft, scoreA=0, scoreB=0;
+let running=false, paused=false;
+let teamAName="Team A", teamBName="Team B";
+let colorA="#00f", colorB="#f00";
+let controlledPlayer=1;
+
+document.addEventListener("keydown",e=>{
+  keys[e.key.toLowerCase()]=true;
+  if(e.key.toLowerCase()==="p") togglePause();
+});
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function startGame(){
+  document.getElementById("menu").style.display="none";
+  document.getElementById("scoreboard").style.display="block";
+  teamAName=document.getElementById("teamA").value||"Team A";
+  teamBName=document.getElementById("teamB").value||"Team B";
+  colorA=document.getElementById("colorA").value;
+  colorB=document.getElementById("colorB").value;
+  timeLeft=parseInt(document.getElementById("matchTime").value);
+
+  setupTeams();
+  ball={x:450,y:275,dx:0,dy:0,r:6,owner:null};
+
+  document.getElementById("crowd").play();
+  running=true;
+  setInterval(()=>{ if(running && !paused && timeLeft>0) timeLeft--; },1000);
+  loop();
+}
+
+function setupTeams(){
+  playersA=[]; playersB=[];
+  let baseA=[[100,275],[200,150],[200,400],[300,220],[300,330]];
+  let baseB=[[800,275],[700,150],[700,400],[600,220],[600,330]];
+  for(let i=0;i<5;i++){
+    playersA.push({x:baseA[i][0],y:baseA[i][1],r:14,color:colorA,name:"A"+i,num:i+1,hasBall:false,team:"A",ai:(i!==1)});
+    playersB.push({x:baseB[i][0],y:baseB[i][1],r:14,color:colorB,name:"B"+i,num:i+1,hasBall:false,team:"B",ai:true});
+  }
+}
+
+function togglePause(){
+  paused=!paused;
+  document.getElementById("pauseScreen").style.display=paused?"block":"none";
+}
+
+function moveControlled(){
+  let me=playersA[controlledPlayer];
+  let speed=keys['e']?3:2;
+  if(keys['w']||keys['arrowup']) me.y-=speed;
+  if(keys['s']||keys['arrowdown']) me.y+=speed;
+  if(keys['a']||keys['arrowleft']) me.x-=speed;
+  if(keys['d']||keys['arrowright']) me.x+=speed;
+
+  me.x=Math.max(30,Math.min(870,me.x));
+  me.y=Math.max(30,Math.min(520,me.y));
+
+  if(ball.owner===me){
+    ball.x=me.x+Math.cos(0)*16;
+    ball.y=me.y+Math.sin(0)*16;
+    if(keys['d']){ // sút
+      ball.dx=(Math.random()*2-1)*4+ (Math.random()<0.5?-6:6);
+      ball.dy=(Math.random()*2-1)*4;
+      ball.owner=null;
+      document.getElementById("kick").play();
+    }
+    if(keys['s']){ // chuyền sệt
+      let mate=closestMate(me,playersA);
+      if(mate){
+        let dx=mate.x-ball.x,dy=mate.y-ball.y,dist=Math.hypot(dx,dy);
+        ball.dx=dx/dist*5; ball.dy=dy/dist*5;
+        ball.owner=null;
+        document.getElementById("kick").play();
+      }
+    }
+  }
+}
+
+function closestMate(me,list){
+  let best=null,bestDist=9999;
+  list.forEach(p=>{
+    if(p!==me){
+      let d=Math.hypot(me.x-p.x,me.y-p.y);
+      if(d<bestDist){bestDist=d; best=p;}
+    }
+  });
+  return best;
+}
+
+function aiMove(){
+  playersB.forEach(p=>{
+    if(p.ai){
+      if(ball.owner && ball.owner.team==="A"){
+        let dx=ball.x-p.x, dy=ball.y-p.y;
+        let d=Math.hypot(dx,dy);
+        if(d>1){p.x+=dx/d; p.y+=dy/d;}
+      }
+    }
+  });
+}
+
+function moveBall(){
+  if(!ball.owner){
+    ball.x+=ball.dx; ball.y+=ball.dy;
+    ball.dx*=0.98; ball.dy*=0.98;
+  }
+  if(ball.y<10||ball.y>540) ball.dy*=-1;
+  if(ball.x<10||ball.x>890) ball.dx*=-1;
+
+  // goal
+  if(ball.x<20 && ball.y>220&&ball.y<330){ scoreB++; resetBall(); }
+  if(ball.x>880&&ball.y>220&&ball.y<330){ scoreA++; resetBall(); }
+
+  // check cướp bóng
+  [...playersA,...playersB].forEach(p=>{
+    let d=Math.hypot(ball.x-p.x,ball.y-p.y);
+    if(d<p.r+ball.r && !ball.owner){
+      ball.owner=p;
+    }
+  });
+}
+
+function resetBall(){
+  ball.x=450; ball.y=275; ball.dx=0; ball.dy=0; ball.owner=null;
+  document.getElementById("whistle").play();
+}
+
+function drawField(){
+  ctx.fillStyle="#006400"; ctx.fillRect(0,0,900,550);
+  ctx.strokeStyle="white"; ctx.lineWidth=2;
+  ctx.strokeRect(0,0,900,550);
+  ctx.beginPath(); ctx.moveTo(450,0); ctx.lineTo(450,550); ctx.stroke();
+  ctx.strokeRect(0,200,10,150); ctx.strokeRect(890,200,10,150);
+  ctx.beginPath(); ctx.arc(450,275,70,0,Math.PI*2); ctx.stroke();
+}
+
+function drawPlayers(list){
+  list.forEach(p=>{
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=p.color; ctx.fill(); ctx.strokeStyle="white"; ctx.stroke();
+    ctx.fillStyle="white"; ctx.font="10px Arial";
+    ctx.fillText(p.num,p.x-4,p.y+4);
+  });
+}
+
+function drawBall(){
+  ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+  ctx.fillStyle="white"; ctx.fill(); ctx.stroke();
+}
+
+function loop(){
+  if(!running) return;
+  if(!paused){
+    moveControlled();
+    aiMove();
+    moveBall();
+
+    drawField();
+    drawPlayers(playersA);
+    drawPlayers(playersB);
+    drawBall();
+
+    document.getElementById("scoreboard").innerText=
+      `Time: ${timeLeft} | ${teamAName} ${scoreA} - ${scoreB} ${teamBName}`;
+  }
+  requestAnimationFrame(loop);
+}
+
 
 
 
