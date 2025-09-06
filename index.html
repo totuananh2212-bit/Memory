@@ -1,182 +1,275 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Mini Soccer 2D</title>
-  <style>
-    body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; }
-    #menu, #gameUI { text-align: center; margin-top: 20px; }
-    canvas { display: block; margin: 10px auto; background: green; }
-    .hidden { display: none; }
-    input, select, button { margin: 5px; padding: 5px; }
-  </style>
-</head>
-<body>
-  <div id="menu">
-    <h1>⚽ Mini Soccer 2D</h1>
-    <label>Đội 1: <input id="team1Name" value="Team A"></label>
-    <label>Áo: <input id="team1Color" type="color" value="#ff0000"></label><br>
-    <label>Đội 2: <input id="team2Name" value="Team B"></label>
-    <label>Áo: <input id="team2Color" type="color" value="#0000ff"></label><br>
-    <label>Thời gian (phút): 
-      <select id="matchTime">
-        <option value="1">1</option>
-        <option value="3" selected>3</option>
-        <option value="5">5</option>
-      </select>
-    </label><br>
-    <button id="startBtn">Bắt đầu trận</button>
-  </div>
+import pygame
+import random
 
-  <div id="gameUI" class="hidden">
-    <div id="scoreboard"></div>
-    <div id="timer"></div>
-    <button onclick="togglePause()">Pause (P)</button>
-    <canvas id="gameCanvas" width="800" height="500"></canvas>
-  </div>
+pygame.init()
 
-  <audio id="crowd" loop>
-    <source src="https://actions.google.com/sounds/v1/crowd/crowd_cheer.ogg" type="audio/ogg">
-  </audio>
+# ---- CÀI ĐẶT MÀN HÌNH ----
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("WOLF by ToAh")
+clock = pygame.time.Clock()
+FPS = 60
 
-  <script>
-    let canvas, ctx;
-    let gameInterval, timerInterval;
-    let isPaused = false;
-    let matchSeconds = 0;
-    let timeLeft = 0;
+# ---- MÀU SẮC ----
+WHITE = (255, 255, 255)
+BLACK = (0,0,0)
+BLUE  = (135,206,235)
+RED   = (255,0,0)
+GREEN = (0,255,0)
+YELLOW= (255,255,0)
+PURPLE= (128,0,128)
 
-    const players = [];
-    const ball = { x: 400, y: 250, radius: 7, vx: 0, vy: 0, owner: null };
+COLOR_OPTIONS = {
+    "GRAY": (192,192,192),
+    "BLUE": (0,0,255),
+    "RED": (255,0,0),
+    "GREEN": (0,255,0),
+    "YELLOW": (255,255,0),
+    "PURPLE": (128,0,128)
+}
 
-    function createTeam(color, side) {
-      const team = [];
-      const baseX = side === "left" ? 200 : 600;
-      for (let i = 0; i < 5; i++) {
-        team.push({
-          x: baseX + (Math.random()*100 - 50),
-          y: 100 + i*80,
-          radius: 12,
-          color,
-          role: i === 0 ? "GK" : "FW",
-          speed: 2
-        });
-      }
-      return team;
-    }
+font = pygame.font.SysFont(None, 40)
 
-    let team1, team2;
-    let score = [0,0];
+# ---- LỚP PLAYER ----
+class Player(pygame.sprite.Sprite):
+    def __init__(self, x, y, color):
+        super().__init__()
+        self.size = 50
+        self.color = color
+        self.image = pygame.Surface((self.size, self.size))
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect(topleft=(x,y))
+        self.vel_y = 0
+        self.on_ground = False
+        self.is_big = False
+        self.can_shoot = False
 
-    function startGame(){
-      document.getElementById("menu").classList.add("hidden");
-      document.getElementById("gameUI").classList.remove("hidden");
+    def update(self, keys):
+        dx = dy = 0
+        if keys[pygame.K_LEFT]:
+            dx = -5
+        if keys[pygame.K_RIGHT]:
+            dx = 5
+        if keys[pygame.K_s] and self.on_ground:
+            self.vel_y = -15
+            self.on_ground = False
 
-      canvas = document.getElementById("gameCanvas");
-      ctx = canvas.getContext("2d");
+        # Gravity
+        self.vel_y += 1
+        if self.vel_y > 15:
+            self.vel_y = 15
+        dy += self.vel_y
 
-      const team1Color = document.getElementById("team1Color").value;
-      const team2Color = document.getElementById("team2Color").value;
-      team1 = createTeam(team1Color, "left");
-      team2 = createTeam(team2Color, "right");
-      players.splice(0, players.length, ...team1, ...team2);
+        # Va chạm sàn
+        if self.rect.bottom + dy > HEIGHT-50:
+            dy = HEIGHT-50 - self.rect.bottom
+            self.vel_y = 0
+            self.on_ground = True
 
-      score = [0,0];
-      updateScoreboard();
+        # Cập nhật vị trí
+        self.rect.x += dx
+        self.rect.y += dy
 
-      matchSeconds = parseInt(document.getElementById("matchTime").value) * 60;
-      timeLeft = matchSeconds;
-      timerInterval = setInterval(updateTimer, 1000);
+    def grow(self):
+        if not self.is_big:
+            self.size = int(self.size*1.5)
+            self.image = pygame.Surface((self.size,self.size))
+            self.image.fill(self.color)
+            self.rect = self.image.get_rect(midbottom=self.rect.midbottom)
+            self.is_big = True
+            self.can_shoot = True
 
-      document.getElementById("crowd").play();
+# ---- LỚP PLATFORM ----
+class Platform(pygame.sprite.Sprite):
+    def __init__(self, x, y, w, h):
+        super().__init__()
+        self.image = pygame.Surface((w,h))
+        self.image.fill(BLACK)
+        self.rect = self.image.get_rect(topleft=(x,y))
 
-      gameInterval = setInterval(gameLoop, 1000/60);
-    }
+# ---- LỚP MUSHROOM ----
+class Mushroom(pygame.sprite.Sprite):
+    def __init__(self,x,y):
+        super().__init__()
+        self.image = pygame.Surface((30,30))
+        self.image.fill(RED)
+        self.rect = self.image.get_rect(topleft=(x,y))
 
-    function updateScoreboard(){
-      document.getElementById("scoreboard").innerText = 
-        document.getElementById("team1Name").value + " " + score[0] +
-        " - " + score[1] + " " + document.getElementById("team2Name").value;
-    }
+# ---- LỚP ENEMY ----
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self,x,y, speed=2):
+        super().__init__()
+        self.image = pygame.Surface((40,40))
+        self.image.fill(GREEN)
+        self.rect = self.image.get_rect(topleft=(x,y))
+        self.speed = speed
 
-    function updateTimer(){
-      if (!isPaused){
-        timeLeft--;
-        document.getElementById("timer").innerText = 
-          "⏱️ " + Math.floor(timeLeft/60) + ":" + (timeLeft%60).toString().padStart(2,"0");
-        if (timeLeft<=0){ endGame(); }
-      }
-    }
+    def update(self):
+        self.rect.x += self.speed
+        if self.rect.left <=0 or self.rect.right >= WIDTH:
+            self.speed *= -1
 
-    function endGame(){
-      clearInterval(gameInterval);
-      clearInterval(timerInterval);
-      alert("Kết thúc trận! Tỉ số: " + score[0] + "-" + score[1]);
-      location.reload();
-    }
+# ---- LỚP FIREBALL ----
+class Fireball(pygame.sprite.Sprite):
+    def __init__(self,x,y,direction):
+        super().__init__()
+        self.image = pygame.Surface((15,15))
+        self.image.fill(YELLOW)
+        self.rect = self.image.get_rect(center=(x,y))
+        self.speed = 10 * direction
 
-    function togglePause(){
-      isPaused = !isPaused;
-    }
+    def update(self):
+        self.rect.x += self.speed
+        if self.rect.right <0 or self.rect.left > WIDTH:
+            self.kill()
 
-    function gameLoop(){
-      if (isPaused) return;
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      drawField();
-      moveBall();
-      drawPlayers();
-      drawBall();
-    }
+# ---- LỚP BOSS ----
+class Boss(pygame.sprite.Sprite):
+    def __init__(self,x,y, health=10):
+        super().__init__()
+        self.image = pygame.Surface((100,100))
+        self.image.fill(PURPLE)
+        self.rect = self.image.get_rect(topleft=(x,y))
+        self.health = health
+        self.speed = 3
 
-    function drawField(){
-      ctx.fillStyle = "#2e8b57";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.strokeStyle = "white";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(50,50,700,400);
-      ctx.beginPath();
-      ctx.arc(400,250,70,0,Math.PI*2);
-      ctx.stroke();
-    }
+    def update(self):
+        self.rect.x += self.speed
+        if self.rect.left <=0 or self.rect.right >= WIDTH:
+            self.speed *= -1
 
-    function drawPlayers(){
-      players.forEach(p=>{
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
-        ctx.fill();
-      });
-    }
+# ---- MENU ĐẶT TÊN & CHỌN MÀU ----
+def main_menu():
+    name = ""
+    color_keys = list(COLOR_OPTIONS.keys())
+    color_index = 0
+    selecting = True
 
-    function drawBall(){
-      ctx.fillStyle = "white";
-      ctx.beginPath();
-      ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2);
-      ctx.fill();
-    }
+    while selecting:
+        screen.fill(BLUE)
+        title_text = font.render("WOLF by ToAh", True, WHITE)
+        screen.blit(title_text, (WIDTH//2 - title_text.get_width()//2, 50))
 
-    function moveBall(){
-      if (ball.owner){
-        ball.x = ball.owner.x;
-        ball.y = ball.owner.y;
-      } else {
-        ball.x += ball.vx;
-        ball.y += ball.vy;
-        ball.vx *= 0.98;
-        ball.vy *= 0.98;
-      }
-    }
+        # Nhập tên
+        name_text = font.render(f"Name: {name}", True, WHITE)
+        screen.blit(name_text, (WIDTH//2 - name_text.get_width()//2, 150))
 
-    // Keyboard test
-    document.addEventListener("keydown", e=>{
-      if (e.key==="p"||e.key==="P") togglePause();
-    });
+        # Chọn màu
+        color_text = font.render(f"Color: {color_keys[color_index]}", True, COLOR_OPTIONS[color_keys[color_index]])
+        screen.blit(color_text, (WIDTH//2 - color_text.get_width()//2, 250))
 
-    // Liên kết nút Start
-    document.getElementById("startBtn").addEventListener("click", startGame);
-  </script>
-</body>
-</html>
+        info_text = font.render("Enter name, UP/DOWN to change color, Press ENTER to start", True, WHITE)
+        screen.blit(info_text, (WIDTH//2 - info_text.get_width()//2, 350))
+
+        pygame.display.flip()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN and name != "":
+                    selecting = False
+                elif event.key == pygame.K_BACKSPACE:
+                    name = name[:-1]
+                elif event.key == pygame.K_UP:
+                    color_index = (color_index -1) % len(color_keys)
+                elif event.key == pygame.K_DOWN:
+                    color_index = (color_index +1) % len(color_keys)
+                else:
+                    if len(name)<10 and event.unicode.isalnum():
+                        name += event.unicode
+    return name, COLOR_OPTIONS[color_keys[color_index]]
+
+# ---- KHỞI ĐỘNG GAME ----
+player_name, player_color = main_menu()
+
+player = Player(100, HEIGHT-100, player_color)
+player_group = pygame.sprite.Group()
+player_group.add(player)
+
+platforms = pygame.sprite.Group()
+platforms.add(Platform(0, HEIGHT-50, WIDTH,50))
+platforms.add(Platform(200, 450, 150,20))
+platforms.add(Platform(500, 350, 150,20))
+
+mushrooms = pygame.sprite.Group()
+mushrooms.add(Mushroom(220,420))
+mushrooms.add(Mushroom(520,320))
+
+enemies = pygame.sprite.Group()
+enemies.add(Enemy(300, HEIGHT-90, speed=2))
+enemies.add(Enemy(600, HEIGHT-90, speed=3))
+
+fireballs = pygame.sprite.Group()
+bosses = pygame.sprite.Group()
+bosses.add(Boss(WIDTH-200, HEIGHT-150))
+
+# ---- GAME LOOP ----
+running = True
+level = 1
+while running:
+    clock.tick(FPS)
+    keys = pygame.key.get_pressed()
+    screen.fill(BLUE)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_f and player.can_shoot:
+                direction = 1 if keys[pygame.K_RIGHT] else -1
+                fireball = Fireball(player.rect.centerx, player.rect.centery, direction)
+                fireballs.add(fireball)
+
+    # Cập nhật
+    player.update(keys)
+    enemies.update()
+    fireballs.update()
+    bosses.update()
+
+    # Va chạm với platform
+    for plat in platforms:
+        if player.rect.colliderect(plat.rect) and player.vel_y>=0:
+            if player.rect.bottom <= plat.rect.bottom:
+                player.rect.bottom = plat.rect.top
+                player.vel_y = 0
+                player.on_ground = True
+
+    # Va chạm với nấm
+    hit_mush = pygame.sprite.spritecollide(player, mushrooms, True)
+    if hit_mush:
+        player.grow()
+
+    # Va chạm với quái
+    if pygame.sprite.spritecollide(player, enemies, False):
+        print(f"{player_name} bị thương!")
+
+    # Fireball va quái
+    for fire in fireballs:
+        hit_enemy = pygame.sprite.spritecollide(fire, enemies, True)
+        if hit_enemy:
+            fire.kill()
+        hit_boss = pygame.sprite.spritecollide(fire, bosses, False)
+        for b in hit_boss:
+            b.health -=1
+            fire.kill()
+            if b.health <=0:
+                b.kill()
+                print(f"BOSS bị tiêu diệt, màn {level} qua!")
+
+    # Vẽ
+    platforms.draw(screen)
+    mushrooms.draw(screen)
+    enemies.draw(screen)
+    bosses.draw(screen)
+    fireballs.draw(screen)
+    player_group.draw(screen)
+
+    pygame.display.flip()
+
+pygame.quit()
+
 
 
 
