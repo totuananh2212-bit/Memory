@@ -25,7 +25,7 @@
         <option value="5">5</option>
       </select>
     </label><br>
-    <button onclick="startGame()">Bắt đầu trận</button>
+    <button id="startBtn">Bắt đầu trận</button>
   </div>
 
   <div id="gameUI" class="hidden">
@@ -40,8 +40,7 @@
   </audio>
 
   <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+    let canvas, ctx;
     let gameInterval, timerInterval;
     let isPaused = false;
     let matchSeconds = 0;
@@ -59,7 +58,6 @@
           y: 100 + i*80,
           radius: 12,
           color,
-          hasBall: false,
           role: i === 0 ? "GK" : "FW",
           speed: 2
         });
@@ -73,6 +71,9 @@
     function startGame(){
       document.getElementById("menu").classList.add("hidden");
       document.getElementById("gameUI").classList.remove("hidden");
+
+      canvas = document.getElementById("gameCanvas");
+      ctx = canvas.getContext("2d");
 
       const team1Color = document.getElementById("team1Color").value;
       const team2Color = document.getElementById("team2Color").value;
@@ -166,13 +167,17 @@
       }
     }
 
-    // TODO: handle keyboard input, passing, shooting, skills (có thể viết thêm)
+    // Keyboard test
     document.addEventListener("keydown", e=>{
       if (e.key==="p"||e.key==="P") togglePause();
     });
+
+    // Liên kết nút Start
+    document.getElementById("startBtn").addEventListener("click", startGame);
   </script>
 </body>
 </html>
+
 
 
 
