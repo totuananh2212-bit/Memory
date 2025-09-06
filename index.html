@@ -1,251 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>⚽ Mini Soccer 2D</title>
+  <meta charset="UTF-8" />
+  <title>Mini Soccer 2D</title>
   <style>
-    body { margin:0; background:#111; font-family: Arial; }
-    canvas { display:block; margin:0 auto; background:#006400; }
-    #menu {
-      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      background:#222; color:white; padding:20px; border-radius:10px;
-      text-align:center; width:350px;
-    }
-    #menu label { display:block; margin-top:10px; }
-    #scoreboard {
-      position:absolute; top:10px; left:50%; transform:translateX(-50%);
-      color:white; font-size:18px; display:none;
-    }
-    #pauseScreen {
-      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      color:white; font-size:28px; display:none;
-    }
+    body { margin: 0; background: #1a1a1a; color: white; font-family: sans-serif; }
+    #menu, #gameUI { text-align: center; margin-top: 20px; }
+    canvas { display: block; margin: 10px auto; background: green; }
+    .hidden { display: none; }
+    input, select, button { margin: 5px; padding: 5px; }
   </style>
 </head>
 <body>
   <div id="menu">
-    <h2>⚽ Mini Soccer 2D</h2>
-    <label>Tên đội A:</label><input type="text" id="teamA" value="Team A">
-    <label>Tên đội B:</label><input type="text" id="teamB" value="Team B">
-    <label>Màu áo A:</label><input type="color" id="colorA" value="#0000ff">
-    <label>Màu áo B:</label><input type="color" id="colorB" value="#ff0000">
-    <label>Thời gian trận:</label>
-    <select id="matchTime">
-      <option value="60">1 phút</option>
-      <option value="180" selected>3 phút</option>
-      <option value="300">5 phút</option>
-    </select>
-    <label>Sơ đồ:</label>
-    <select id="formation">
-      <option value="1-1-2-1">1-1-2-1</option>
-      <option value="1-2-2">1-2-2</option>
-      <option value="1-1-3">1-1-3</option>
-      <option value="1-3-1">1-3-1</option>
-      <option value="1-2-1-1">1-2-1-1</option>
-    </select>
-    <br><br>
-    <button onclick="startGame()">Start Match</button>
-    <p style="font-size:12px;color:#bbb;text-align:left">
-      ⚽ Điều khiển:<br>
-      D = sút / tranh bóng<br>
-      S = chuyền sệt<br>
-      A = chuyền bổng / xoạc<br>
-      W = chọc khe<br>
-      Q/C = skill qua người<br>
-      E = chạy nhanh<br>
-      P = tạm dừng<br>
-      Mũi tên / WASD = di chuyển
-    </p>
+    <h1>⚽ Mini Soccer 2D</h1>
+    <label>Đội 1: <input id="team1Name" value="Team A"></label>
+    <label>Áo: <input id="team1Color" type="color" value="#ff0000"></label><br>
+    <label>Đội 2: <input id="team2Name" value="Team B"></label>
+    <label>Áo: <input id="team2Color" type="color" value="#0000ff"></label><br>
+    <label>Thời gian (phút): 
+      <select id="matchTime">
+        <option value="1">1</option>
+        <option value="3" selected>3</option>
+        <option value="5">5</option>
+      </select>
+    </label><br>
+    <button onclick="startGame()">Bắt đầu trận</button>
   </div>
 
-  <div id="scoreboard">Time: 0 | 0 - 0</div>
-  <div id="pauseScreen">⏸ Paused</div>
-
-  <canvas id="gameCanvas" width="900" height="550"></canvas>
+  <div id="gameUI" class="hidden">
+    <div id="scoreboard"></div>
+    <div id="timer"></div>
+    <button onclick="togglePause()">Pause (P)</button>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+  </div>
 
   <audio id="crowd" loop>
-    <source src="https://actions.google.com/sounds/v1/crowds/stadium_cheer.ogg" type="audio/ogg">
-  </audio>
-  <audio id="kick">
-    <source src="https://actions.google.com/sounds/v1/sports/football_kick.ogg" type="audio/ogg">
-  </audio>
-  <audio id="whistle">
-    <source src="https://actions.google.com/sounds/v1/sports/referee_whistle.ogg" type="audio/ogg">
+    <source src="https://actions.google.com/sounds/v1/crowd/crowd_cheer.ogg" type="audio/ogg">
   </audio>
 
-  <script src="game.js"></script>
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    let gameInterval, timerInterval;
+    let isPaused = false;
+    let matchSeconds = 0;
+    let timeLeft = 0;
+
+    const players = [];
+    const ball = { x: 400, y: 250, radius: 7, vx: 0, vy: 0, owner: null };
+
+    function createTeam(color, side) {
+      const team = [];
+      const baseX = side === "left" ? 200 : 600;
+      for (let i = 0; i < 5; i++) {
+        team.push({
+          x: baseX + (Math.random()*100 - 50),
+          y: 100 + i*80,
+          radius: 12,
+          color,
+          hasBall: false,
+          role: i === 0 ? "GK" : "FW",
+          speed: 2
+        });
+      }
+      return team;
+    }
+
+    let team1, team2;
+    let score = [0,0];
+
+    function startGame(){
+      document.getElementById("menu").classList.add("hidden");
+      document.getElementById("gameUI").classList.remove("hidden");
+
+      const team1Color = document.getElementById("team1Color").value;
+      const team2Color = document.getElementById("team2Color").value;
+      team1 = createTeam(team1Color, "left");
+      team2 = createTeam(team2Color, "right");
+      players.splice(0, players.length, ...team1, ...team2);
+
+      score = [0,0];
+      updateScoreboard();
+
+      matchSeconds = parseInt(document.getElementById("matchTime").value) * 60;
+      timeLeft = matchSeconds;
+      timerInterval = setInterval(updateTimer, 1000);
+
+      document.getElementById("crowd").play();
+
+      gameInterval = setInterval(gameLoop, 1000/60);
+    }
+
+    function updateScoreboard(){
+      document.getElementById("scoreboard").innerText = 
+        document.getElementById("team1Name").value + " " + score[0] +
+        " - " + score[1] + " " + document.getElementById("team2Name").value;
+    }
+
+    function updateTimer(){
+      if (!isPaused){
+        timeLeft--;
+        document.getElementById("timer").innerText = 
+          "⏱️ " + Math.floor(timeLeft/60) + ":" + (timeLeft%60).toString().padStart(2,"0");
+        if (timeLeft<=0){ endGame(); }
+      }
+    }
+
+    function endGame(){
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+      alert("Kết thúc trận! Tỉ số: " + score[0] + "-" + score[1]);
+      location.reload();
+    }
+
+    function togglePause(){
+      isPaused = !isPaused;
+    }
+
+    function gameLoop(){
+      if (isPaused) return;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      drawField();
+      moveBall();
+      drawPlayers();
+      drawBall();
+    }
+
+    function drawField(){
+      ctx.fillStyle = "#2e8b57";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.strokeStyle = "white";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(50,50,700,400);
+      ctx.beginPath();
+      ctx.arc(400,250,70,0,Math.PI*2);
+      ctx.stroke();
+    }
+
+    function drawPlayers(){
+      players.forEach(p=>{
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.radius,0,Math.PI*2);
+        ctx.fill();
+      });
+    }
+
+    function drawBall(){
+      ctx.fillStyle = "white";
+      ctx.beginPath();
+      ctx.arc(ball.x,ball.y,ball.radius,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    function moveBall(){
+      if (ball.owner){
+        ball.x = ball.owner.x;
+        ball.y = ball.owner.y;
+      } else {
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+        ball.vx *= 0.98;
+        ball.vy *= 0.98;
+      }
+    }
+
+    // TODO: handle keyboard input, passing, shooting, skills (có thể viết thêm)
+    document.addEventListener("keydown", e=>{
+      if (e.key==="p"||e.key==="P") togglePause();
+    });
+  </script>
 </body>
 </html>
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
-let keys={};
-let playersA=[], playersB=[], ball, timeLeft, scoreA=0, scoreB=0;
-let running=false, paused=false;
-let teamAName="Team A", teamBName="Team B";
-let colorA="#00f", colorB="#f00";
-let controlledPlayer=1;
 
-document.addEventListener("keydown",e=>{
-  keys[e.key.toLowerCase()]=true;
-  if(e.key.toLowerCase()==="p") togglePause();
-});
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
-
-function startGame(){
-  document.getElementById("menu").style.display="none";
-  document.getElementById("scoreboard").style.display="block";
-  teamAName=document.getElementById("teamA").value||"Team A";
-  teamBName=document.getElementById("teamB").value||"Team B";
-  colorA=document.getElementById("colorA").value;
-  colorB=document.getElementById("colorB").value;
-  timeLeft=parseInt(document.getElementById("matchTime").value);
-
-  setupTeams();
-  ball={x:450,y:275,dx:0,dy:0,r:6,owner:null};
-
-  document.getElementById("crowd").play();
-  running=true;
-  setInterval(()=>{ if(running && !paused && timeLeft>0) timeLeft--; },1000);
-  loop();
-}
-
-function setupTeams(){
-  playersA=[]; playersB=[];
-  let baseA=[[100,275],[200,150],[200,400],[300,220],[300,330]];
-  let baseB=[[800,275],[700,150],[700,400],[600,220],[600,330]];
-  for(let i=0;i<5;i++){
-    playersA.push({x:baseA[i][0],y:baseA[i][1],r:14,color:colorA,name:"A"+i,num:i+1,hasBall:false,team:"A",ai:(i!==1)});
-    playersB.push({x:baseB[i][0],y:baseB[i][1],r:14,color:colorB,name:"B"+i,num:i+1,hasBall:false,team:"B",ai:true});
-  }
-}
-
-function togglePause(){
-  paused=!paused;
-  document.getElementById("pauseScreen").style.display=paused?"block":"none";
-}
-
-function moveControlled(){
-  let me=playersA[controlledPlayer];
-  let speed=keys['e']?3:2;
-  if(keys['w']||keys['arrowup']) me.y-=speed;
-  if(keys['s']||keys['arrowdown']) me.y+=speed;
-  if(keys['a']||keys['arrowleft']) me.x-=speed;
-  if(keys['d']||keys['arrowright']) me.x+=speed;
-
-  me.x=Math.max(30,Math.min(870,me.x));
-  me.y=Math.max(30,Math.min(520,me.y));
-
-  if(ball.owner===me){
-    ball.x=me.x+Math.cos(0)*16;
-    ball.y=me.y+Math.sin(0)*16;
-    if(keys['d']){ // sút
-      ball.dx=(Math.random()*2-1)*4+ (Math.random()<0.5?-6:6);
-      ball.dy=(Math.random()*2-1)*4;
-      ball.owner=null;
-      document.getElementById("kick").play();
-    }
-    if(keys['s']){ // chuyền sệt
-      let mate=closestMate(me,playersA);
-      if(mate){
-        let dx=mate.x-ball.x,dy=mate.y-ball.y,dist=Math.hypot(dx,dy);
-        ball.dx=dx/dist*5; ball.dy=dy/dist*5;
-        ball.owner=null;
-        document.getElementById("kick").play();
-      }
-    }
-  }
-}
-
-function closestMate(me,list){
-  let best=null,bestDist=9999;
-  list.forEach(p=>{
-    if(p!==me){
-      let d=Math.hypot(me.x-p.x,me.y-p.y);
-      if(d<bestDist){bestDist=d; best=p;}
-    }
-  });
-  return best;
-}
-
-function aiMove(){
-  playersB.forEach(p=>{
-    if(p.ai){
-      if(ball.owner && ball.owner.team==="A"){
-        let dx=ball.x-p.x, dy=ball.y-p.y;
-        let d=Math.hypot(dx,dy);
-        if(d>1){p.x+=dx/d; p.y+=dy/d;}
-      }
-    }
-  });
-}
-
-function moveBall(){
-  if(!ball.owner){
-    ball.x+=ball.dx; ball.y+=ball.dy;
-    ball.dx*=0.98; ball.dy*=0.98;
-  }
-  if(ball.y<10||ball.y>540) ball.dy*=-1;
-  if(ball.x<10||ball.x>890) ball.dx*=-1;
-
-  // goal
-  if(ball.x<20 && ball.y>220&&ball.y<330){ scoreB++; resetBall(); }
-  if(ball.x>880&&ball.y>220&&ball.y<330){ scoreA++; resetBall(); }
-
-  // check cướp bóng
-  [...playersA,...playersB].forEach(p=>{
-    let d=Math.hypot(ball.x-p.x,ball.y-p.y);
-    if(d<p.r+ball.r && !ball.owner){
-      ball.owner=p;
-    }
-  });
-}
-
-function resetBall(){
-  ball.x=450; ball.y=275; ball.dx=0; ball.dy=0; ball.owner=null;
-  document.getElementById("whistle").play();
-}
-
-function drawField(){
-  ctx.fillStyle="#006400"; ctx.fillRect(0,0,900,550);
-  ctx.strokeStyle="white"; ctx.lineWidth=2;
-  ctx.strokeRect(0,0,900,550);
-  ctx.beginPath(); ctx.moveTo(450,0); ctx.lineTo(450,550); ctx.stroke();
-  ctx.strokeRect(0,200,10,150); ctx.strokeRect(890,200,10,150);
-  ctx.beginPath(); ctx.arc(450,275,70,0,Math.PI*2); ctx.stroke();
-}
-
-function drawPlayers(list){
-  list.forEach(p=>{
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-    ctx.fillStyle=p.color; ctx.fill(); ctx.strokeStyle="white"; ctx.stroke();
-    ctx.fillStyle="white"; ctx.font="10px Arial";
-    ctx.fillText(p.num,p.x-4,p.y+4);
-  });
-}
-
-function drawBall(){
-  ctx.beginPath(); ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
-  ctx.fillStyle="white"; ctx.fill(); ctx.stroke();
-}
-
-function loop(){
-  if(!running) return;
-  if(!paused){
-    moveControlled();
-    aiMove();
-    moveBall();
-
-    drawField();
-    drawPlayers(playersA);
-    drawPlayers(playersB);
-    drawBall();
-
-    document.getElementById("scoreboard").innerText=
-      `Time: ${timeLeft} | ${teamAName} ${scoreA} - ${scoreB} ${teamBName}`;
-  }
-  requestAnimationFrame(loop);
-}
 
 
 
