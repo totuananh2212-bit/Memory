@@ -1,82 +1,166 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Ocean Site — Single file</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="siteTitle">Ocean Site</title>
   <style>
-    :root{--bg:#0b1020;--card:#0f1724;--muted:#9aa3b2;--accent:#3aa0d9}
-    *{box-sizing:border-box;font-family:Inter,system-ui,Arial}
-    body{margin:0;background:linear-gradient(180deg,#071428 0%,#02111a 100%);color:#e6eef6}
-    header{padding:18px 24px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;align-items:center;gap:12px}
-    h1{margin:0;font-size:18px}
-    .wrap{max-width:1100px;margin:20px auto;padding:16px}
-    .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
-    .card{background:var(--card);padding:12px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
-    label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
-    input[type=text],textarea,select{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
-    textarea{min-height:100px;resize:vertical}
-    .btn{display:inline-block;padding:8px 12px;border-radius:8px;background:var(--accent);color:#051026;text-decoration:none;border:none;cursor:pointer}
-    .muted{color:var(--muted);font-size:13px}
-    .media-preview{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-    .media-preview figure{width:120px;height:80px;overflow:hidden;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#061322;border:1px solid rgba(255,255,255,0.02);position:relative}
-    .media-preview img,.media-preview video{max-width:100%;max-height:100%;object-fit:cover}
-    .post{margin-bottom:12px;border-radius:10px;padding:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent)}
-    .post .meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:8px}
-    .tools{display:flex;gap:8px;flex-wrap:wrap}
-    .small{padding:6px 8px;font-size:13px}
-    .danger{background:#c94a4a;color:white}
-    footer{margin-top:18px;color:var(--muted);font-size:13px}
-    @media (max-width:900px){.grid{grid-template-columns:1fr}}
+    body {font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f0f8ff;}
+    header {background: #0077b6; color: white; text-align: center; padding: 1rem; background-size: cover; background-position: center;}
+    header h1 {background: rgba(0,0,0,0.5); display: inline-block; padding: 0.5rem 1rem; border-radius: 10px;}
+    nav {display: flex; justify-content: center; gap: 1rem; background: #0096c7; padding: 0.5rem;}
+    nav a {color: white; text-decoration: none; font-weight: bold;}
+    .section {display: none; padding: 1rem;}
+    .active {display: block;}
+    .post {border: 1px solid #ccc; padding: 1rem; margin: 0.5rem 0; border-radius: 8px; background: #fff;}
+    textarea, input[type="text"] {width: 100%; padding: 0.5rem; margin: 0.5rem 0;}
+    button {padding: 0.5rem 1rem; background: #0077b6; color: white; border: none; border-radius: 5px; cursor: pointer;}
+    button:hover {background: #023e8a;}
   </style>
 </head>
 <body>
-  <header>
-    <h1>Ocean Site — single file</h1>
-    <div class="muted">Sao chép file này lên GitHub (ví dụ: index.html) — chạy ngay.</div>
+  <header id="header">
+    <h1 id="headerTitle">Ocean Site</h1>
   </header>
+  <nav>
+    <a href="#" onclick="showSection('section1')">Mục 1: Ảnh & Video</a>
+    <a href="#" onclick="showSection('section2')">Mục 2: Câu chuyện</a>
+    <a href="#" onclick="showSection('section3')">Mục 3: Khác</a>
+    <a href="#" onclick="showSection('settings')">⚙️ Cài đặt</a>
+  </nav>
 
-  <div class="wrap">
-    <div class="grid">
-      <main>
-        <!-- SECTION 1: Media posts (ảnh & video) -->
-        <section class="card" id="section-media">
-          <h2 style="margin:0 0 8px 0">Mục 1 — Up ảnh & video (không giới hạn số bài)</h2>
-          <div class="muted">Mỗi bài có nhiều file media + ghi chú. Có thể đăng không giới hạn số lượng bài. Lưu cục bộ (localStorage). Xuất/nhập JSON để sao lưu.</div>
+  <!-- Mục 1 -->
+  <div id="section1" class="section active">
+    <h2>Đăng Ảnh & Video</h2>
+    <form id="postForm">
+      <input type="file" id="mediaInput" accept="image/*,video/*" multiple>
+      <textarea id="noteInput" placeholder="Viết ghi chú..."></textarea>
+      <button type="submit">Đăng bài</button>
+    </form>
+    <div id="posts"></div>
+  </div>
 
-          <div style="margin-top:12px">
-            <label for="media-files">Chọn ảnh / video</label>
-            <input id="media-files" type="file" accept="image/*,video/*" multiple />
-            <div class="media-preview" id="media-preview"></div>
+  <!-- Mục 2 -->
+  <div id="section2" class="section">
+    <h2>Viết Câu Chuyện</h2>
+    <textarea id="storyInput" placeholder="Nhập câu chuyện..."></textarea>
+    <button onclick="saveStory()">Lưu câu chuyện</button>
+    <div id="stories"></div>
+  </div>
 
-            <label for="media-note">Ghi chú bài</label>
-            <textarea id="media-note" placeholder="Ghi chú... (tùy chọn)"></textarea>
+  <!-- Mục 3 -->
+  <div id="section3" class="section">
+    <h2>Khác</h2>
+    <p>Nội dung thêm...</p>
+  </div>
 
-            <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-              <button id="save-media" class="btn">Lưu bài</button>
-              <button id="clear-inputs" class="small">Xóa inputs</button>
-            </div>
-          </div>
+  <!-- Cài đặt -->
+  <div id="settings" class="section">
+    <h2>Cài đặt Website</h2>
+    <label>Đổi tên website:</label>
+    <input type="text" id="siteNameInput" placeholder="Nhập tên mới...">
+    <button onclick="changeSiteName()">Lưu tên</button>
+    <br><br>
+    <label>Đổi ảnh bìa:</label>
+    <input type="file" id="coverInput" accept="image/*">
+    <button onclick="changeCover()">Lưu ảnh bìa</button>
+  </div>
 
-          <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)">
-          <h3 style="margin:0 0 8px 0">Danh sách bài</h3>
-          <div id="media-list"></div>
-        </section>
+  <script>
+    let posts = JSON.parse(localStorage.getItem("posts")) || [];
 
-        <!-- SECTION 2: Stories / text posts -->
-        <section class="card" id="section-stories" style="margin-top:16px">
-          <h2 style="margin:0 0 8px 0">Mục 2 — Truyện / Bài viết</h2>
-          <label for="story-title">Tiêu đề</label>
-          <input id="story-title" placeholder="Tiêu đề..."></input>
-          <label for="story-category">Loại / Thẻ</label>
-          <input id="story-category" placeholder="VD: cá nhân, kỹ thuật, thơ..."></input>
-          <label for="story-body">Nội dung</label>
-          <textarea id="story-body" placeholder="Viết ở đây..."></textarea>
-          <div style="margin-top:8px;display:flex;gap:8px">
-            <button id="save-story" class="btn">Lưu truyện</button>
-            <button id="clear-story" class="small">Xóa form</button>
-          </div>
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
 
-          <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.04)">
-          <h3 style="margin:0 0 8px 0">Danh sách truyện</h3>
-          <div id="st
+    function renderPosts() {
+      const postsDiv = document.getElementById("posts");
+      postsDiv.innerHTML = "";
+      posts.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "post";
+        if (p.type === "image") {
+          div.innerHTML = `<img src="${p.url}" style="max-width:100%"><p>${p.note}</p>`;
+        } else if (p.type === "video") {
+          div.innerHTML = `<video controls style="max-width:100%"><source src="${p.url}"></video><p>${p.note}</p>`;
+        }
+        postsDiv.appendChild(div);
+      });
+    }
+
+    document.getElementById("postForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const files = document.getElementById("mediaInput").files;
+      const note = document.getElementById("noteInput").value;
+      Array.from(files).forEach(file => {
+        const url = URL.createObjectURL(file);
+        const type = file.type.startsWith("video") ? "video" : "image";
+        posts.push({url, note, type});
+      });
+      localStorage.setItem("posts", JSON.stringify(posts));
+      renderPosts();
+      document.getElementById("noteInput").value = "";
+      document.getElementById("mediaInput").value = "";
+    });
+
+    renderPosts();
+
+    // Story lưu vào localStorage
+    function saveStory() {
+      let story = document.getElementById("storyInput").value;
+      if (!story) return;
+      let stories = JSON.parse(localStorage.getItem("stories")) || [];
+      stories.push(story);
+      localStorage.setItem("stories", JSON.stringify(stories));
+      renderStories();
+      document.getElementById("storyInput").value = "";
+    }
+
+    function renderStories() {
+      let stories = JSON.parse(localStorage.getItem("stories")) || [];
+      let container = document.getElementById("stories");
+      container.innerHTML = "";
+      stories.forEach(s => {
+        let div = document.createElement("div");
+        div.className = "post";
+        div.textContent = s;
+        container.appendChild(div);
+      });
+    }
+
+    renderStories();
+
+    // Cài đặt website
+    function changeSiteName() {
+      let newName = document.getElementById("siteNameInput").value;
+      if (!newName) return;
+      document.getElementById("headerTitle").textContent = newName;
+      document.title = newName;
+      localStorage.setItem("siteName", newName);
+    }
+
+    function changeCover() {
+      let file = document.getElementById("coverInput").files[0];
+      if (!file) return;
+      let url = URL.createObjectURL(file);
+      document.getElementById("header").style.backgroundImage = `url('${url}')`;
+      localStorage.setItem("coverImage", url);
+    }
+
+    // Load config từ localStorage
+    window.onload = function() {
+      let savedName = localStorage.getItem("siteName");
+      if (savedName) {
+        document.getElementById("headerTitle").textContent = savedName;
+        document.title = savedName;
+      }
+      let savedCover = localStorage.getItem("coverImage");
+      if (savedCover) {
+        document.getElementById("header").style.backgroundImage = `url('${savedCover}')`;
+      }
+    }
+  </script>
+</body>
+</html>
+
