@@ -6,77 +6,135 @@
   <style>
     body { margin: 0; overflow: hidden; background: #222; }
     canvas { display: block; }
+    #menu {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #333; padding: 20px; border-radius: 10px;
+      color: white; font-family: Arial; text-align: center;
+    }
+    #menu label { display:block; margin: 10px 0 5px; }
     #scoreboard {
       position: absolute; top: 10px; left: 50%;
       transform: translateX(-50%);
       color: white; font-family: Arial; font-size: 20px;
+      display: none;
     }
   </style>
 </head>
 <body>
+  <div id="menu">
+    <h2>⚽ Mini Soccer 3D</h2>
+    <label>Tên cầu thủ:</label>
+    <input type="text" id="playerName" value="Player 1">
+    <label>Màu áo:</label>
+    <input type="color" id="playerColor" value="#0000ff">
+    <label>Thời gian (phút):</label>
+    <select id="matchTime">
+      <option value="60">1 phút</option>
+      <option value="180" selected>3 phút</option>
+      <option value="300">5 phút</option>
+    </select>
+    <br><br>
+    <button onclick="startGame()">Start Game</button>
+  </div>
   <div id="scoreboard">Time: 180 | Score 0 - 0</div>
+
   <script src="https://cdn.jsdelivr.net/npm/three@0.154/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.154/examples/js/controls/OrbitControls.js"></script>
   <script>
-    // Scene + Camera
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 50, 70);
-    camera.lookAt(0,0,0);
+    let scene, camera, renderer, ball, player, keeper1, keeper2;
+    let keys = {}, ballVel = new THREE.Vector3();
+    let time, scoreA=0, scoreB=0;
+    let playerName="Player", playerColor=0x0000ff;
 
-    const renderer = new THREE.WebGLRenderer({antialias:true});
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
+    function startGame() {
+      // lấy thông tin từ menu
+      playerName = document.getElementById("playerName").value || "Player";
+      playerColor = new THREE.Color(document.getElementById("playerColor").value);
+      time = parseInt(document.getElementById("matchTime").value);
 
-    // Light
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(20,50,20);
-    scene.add(light);
-    scene.add(new THREE.AmbientLight(0x888888));
+      document.getElementById("menu").style.display = "none";
+      document.getElementById("scoreboard").style.display = "block";
 
-    // Pitch
-    const fieldGeom = new THREE.PlaneGeometry(100, 60);
-    const fieldMat = new THREE.MeshPhongMaterial({color:0x228B22});
-    const field = new THREE.Mesh(fieldGeom, fieldMat);
-    field.rotation.x = -Math.PI/2;
-    scene.add(field);
-
-    // Goals
-    const goalMat = new THREE.MeshPhongMaterial({color:0xffffff});
-    const goal1 = new THREE.Mesh(new THREE.BoxGeometry(1,10,20), goalMat);
-    goal1.position.set(-50,5,0);
-    scene.add(goal1);
-    const goal2 = goal1.clone();
-    goal2.position.set(50,5,0);
-    scene.add(goal2);
-
-    // Ball
-    const ballGeom = new THREE.SphereGeometry(1, 16, 16);
-    const ballMat = new THREE.MeshPhongMaterial({color:0xffffff});
-    const ball = new THREE.Mesh(ballGeom, ballMat);
-    ball.position.set(0,1,0);
-    scene.add(ball);
-
-    // Players (simple box)
-    function createPlayer(color, x, z) {
-      const mat = new THREE.MeshPhongMaterial({color: color});
-      const p = new THREE.Mesh(new THREE.BoxGeometry(2,4,2), mat);
-      p.position.set(x,2,z);
-      scene.add(p);
-      return p;
+      init();
+      animate();
+      setInterval(()=>{ if(time>0) time--; },1000);
     }
-    const player = createPlayer(0x0000ff, 0,0); // bạn
-    const keeper1 = createPlayer(0xff0000, -45,0);
-    const keeper2 = createPlayer(0x00ff00, 45,0);
 
-    // Controls
-    const keys = {};
-    document.addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
-    document.addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
+    function init() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera.position.set(0,50,70);
+      camera.lookAt(0,0,0);
 
-    let velocity = new THREE.Vector3();
-    let ballVel = new THREE.Vector3();
-    let time = 180; let scoreA=0, scoreB=0;
+      renderer = new THREE.WebGLRenderer({antialias:true});
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      const light = new THREE.DirectionalLight(0xffffff, 1);
+      light.position.set(20,50,20);
+      scene.add(light);
+      scene.add(new THREE.AmbientLight(0x888888));
+
+      // sân
+      const field = new THREE.Mesh(
+        new THREE.PlaneGeometry(100,60),
+        new THREE.MeshPhongMaterial({color:0x228B22})
+      );
+      field.rotation.x = -Math.PI/2;
+      scene.add(field);
+
+      // gôn
+      const goalMat = new THREE.MeshPhongMaterial({color:0xffffff});
+      const goal1 = new THREE.Mesh(new THREE.BoxGeometry(1,10,20), goalMat);
+      goal1.position.set(-50,5,0);
+      scene.add(goal1);
+      const goal2 = goal1.clone();
+      goal2.position.set(50,5,0);
+      scene.add(goal2);
+
+      // bóng
+      ball = new THREE.Mesh(
+        new THREE.SphereGeometry(1,16,16),
+        new THREE.MeshPhongMaterial({color:0xffffff})
+      );
+      ball.position.set(0,1,0);
+      scene.add(ball);
+
+      // cầu thủ
+      player = createPlayer(playerColor, 0, 0, playerName);
+      keeper1 = createPlayer(0xff0000, -45,0,"GK Red");
+      keeper2 = createPlayer(0x00ff00, 45,0,"GK Green");
+
+      document.addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
+      document.addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
+
+      window.addEventListener('resize', ()=>{
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    function createPlayer(color, x, z, name="Player") {
+      const mat = new THREE.MeshPhongMaterial({color:color});
+      const body = new THREE.Mesh(new THREE.BoxGeometry(2,4,2), mat);
+      body.position.set(x,2,z);
+      scene.add(body);
+
+      // text label (tên cầu thủ)
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.font = '20px Arial'; ctx.fillStyle = 'white';
+      ctx.fillText(name, 10, 30);
+      const tex = new THREE.CanvasTexture(canvas);
+      const labelMat = new THREE.SpriteMaterial({map: tex});
+      const label = new THREE.Sprite(labelMat);
+      label.scale.set(10,5,1);
+      body.add(label);
+      label.position.set(0,6,0);
+
+      return body;
+    }
 
     function resetBall() {
       ball.position.set(0,1,0);
@@ -86,54 +144,43 @@
     function animate() {
       requestAnimationFrame(animate);
 
-      // Move player
+      // di chuyển cầu thủ
       let speed = keys['e'] ? 0.4 : 0.2;
       if(keys['arrowup']||keys['w']) player.position.z -= speed;
       if(keys['arrowdown']||keys['s']) player.position.z += speed;
       if(keys['arrowleft']||keys['a']) player.position.x -= speed;
       if(keys['arrowright']||keys['d']) player.position.x += speed;
 
-      // Ball physics
-      ball.position.add(ballVel);
-      ballVel.multiplyScalar(0.98); // friction
-      if(ball.position.y < 1) ball.position.y = 1;
-
-      // Kick / pass
-      if(keys[' ']) { // Space = sút
+      // D = sút
+      if(keys['d']) {
         if(player.position.distanceTo(ball.position)<3) {
           const dir = new THREE.Vector3().subVectors(ball.position, player.position).normalize();
           ballVel.add(dir.multiplyScalar(0.8));
         }
       }
 
-      // Goal detection
+      // bóng vật lý đơn giản
+      ball.position.add(ballVel);
+      ballVel.multiplyScalar(0.98);
+      if(ball.position.y < 1) ball.position.y = 1;
+
+      // ghi bàn
       if(ball.position.x < -49 && Math.abs(ball.position.z)<10) { scoreB++; resetBall(); }
       if(ball.position.x > 49 && Math.abs(ball.position.z)<10) { scoreA++; resetBall(); }
 
-      // Keeper AI (đi theo bóng trong vùng cấm)
+      // AI thủ môn
       keeper1.position.z = THREE.MathUtils.clamp(ball.position.z, -8, 8);
       keeper2.position.z = THREE.MathUtils.clamp(ball.position.z, -8, 8);
 
-      // Scoreboard
-      document.getElementById('scoreboard').innerText = 
+      // cập nhật scoreboard
+      document.getElementById("scoreboard").innerText =
         `Time: ${time} | Score ${scoreA} - ${scoreB}`;
 
       renderer.render(scene, camera);
     }
-    animate();
-
-    // Timer
-    setInterval(()=>{
-      if(time>0) time--;
-    },1000);
-
-    window.addEventListener('resize',()=>{
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
   </script>
 </body>
 </html>
+
 
 
