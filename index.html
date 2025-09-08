@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>⚽ Mini Soccer 2D</title>
+  <style>
+    body { margin:0; background:#111; font-family: Arial; }
+    canvas { display:block; margin:0 auto; background:#006400; }
+    #menu {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      background:#222; color:white; padding:20px; border-radius:10px;
+      text-align:center; width:300px;
+    }
+    #menu label { display:block; margin-top:10px; }
+    #scoreboard {
+      position:absolute; top:10px; left:50%; transform:translateX(-50%);
+      color:white; font-size:18px; display:none;
+    }
+    #pauseScreen {
+      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      color:white; font-size:28px; display:none;
+    }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <h2>⚽ Mini Soccer 2D</h2>
+    <label>Tên đội A:</label><input type="text" id="teamA" value="Team A">
+    <label>Tên đội B:</label><input type="text" id="teamB" value="Team B">
+    <label>Màu áo A:</label><input type="color" id="colorA" value="#0000ff">
+    <label>Màu áo B:</label><input type="color" id="colorB" value="#ff0000">
+    <label>Thời gian trận:</label>
+    <select id="matchTime">
+      <option value="60">1 phút</option>
+      <option value="180" selected>3 phút</option>
+      <option value="300">5 phút</option>
+    </select>
+    <label>Sơ đồ:</label>
+    <select id="formation">
+      <option value="1-1-2-1">1-1-2-1</option>
+      <option value="1-2-2">1-2-2</option>
+      <option value="1-1-3">1-1-3</option>
+      <option value="1-3-1">1-3-1</option>
+      <option value="1-2-1-1">1-2-1-1</option>
+    </select>
+    <br><br>
+    <button onclick="startGame()">Start Match</button>
+  </div>
+
+  <div id="scoreboard">Time: 0 | 0 - 0</div>
+  <div id="pauseScreen">⏸ Paused</div>
+
+  <canvas id="gameCanvas" width="900" height="550"></canvas>
+
+  <audio id="crowd" loop>
+    <source src="https://actions.google.com/sounds/v1/crowds/stadium_cheer.ogg" type="audio/ogg">
+  </audio>
+  <audio id="kick">
+    <source src="https://actions.google.com/sounds/v1/sports/football_kick.ogg" type="audio/ogg">
+  </audio>
+  <audio id="whistle">
+    <source src="https://actions.google.com/sounds/v1/sports/referee_whistle.ogg" type="audio/ogg">
+  </audio>
+
+  <script src="game.js"></script>
+</body>
+</html>
