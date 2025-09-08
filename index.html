@@ -2,130 +2,160 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Game Quản Lý Bóng Đá Premier League</title>
+<title>Motor Jump Game</title>
 <style>
-body{font-family:sans-serif;background:#2b2b2b;color:#fff;margin:0;padding:0;}
-#container{display:flex;justify-content:space-around;padding:20px;}
-#teams,#players,#match,#ranking{background:#1a1a1a;padding:15px;border-radius:8px;width:23%;}
-button{margin-top:5px;padding:5px 10px;background:#006400;color:#fff;border:none;border-radius:4px;cursor:pointer;}
-h3{margin-top:0;}
-table{width:100%;border-collapse:collapse;margin-top:10px;}
-th,td{border:1px solid #555;padding:4px;text-align:center;}
+body{margin:0;background:#87CEEB;overflow:hidden;}
+canvas{display:block;margin:0 auto;background:#4CAF50;}
+#score{position:absolute;top:10px;left:50%;transform:translateX(-50%);color:#fff;font-size:24px;font-family:sans-serif;}
 </style>
 </head>
 <body>
-<div id="container">
-  <div id="teams">
-    <h3>Chọn đội bóng</h3>
-    <select id="teamSelect"></select>
-    <button onclick="chooseTeam()">Chọn</button>
-    <div id="selectedTeam"></div>
-  </div>
-  <div id="players">
-    <h3>Đội hình cầu thủ</h3>
-    <table id="playerTable"><thead><tr><th>Tên</th><th>Tấn công</th><th>Phòng ngự</th><th>Kỹ thuật</th><th>Tốc độ</th><th>Thể lực</th><th>IQ</th></tr></thead><tbody></tbody></table>
-  </div>
-  <div id="match">
-    <h3>Sim trận đấu</h3>
-    <button onclick="simulateMatch()">Sim trận</button>
-    <div id="matchResult"></div>
-  </div>
-  <div id="ranking">
-    <h3>Bảng xếp hạng</h3>
-    <table id="rankingTable"><thead><tr><th>Đội</th><th>Trận</th><th>Thắng</th><th>Hòa</th><th>Thua</th><th>Điểm</th></tr></thead><tbody></tbody></table>
-  </div>
-</div>
-
+<div id="score">Điểm: 0</div>
+<canvas id="gameCanvas" width="800" height="400"></canvas>
 <script>
-// Danh sách đội Premier League
-let teams = ["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea","Crystal Palace","Everton","Fulham","Liverpool","Luton Town","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sheffield United","Tottenham Hotspur","West Ham United","Wolverhampton","Southampton"];
-let teamPlayers = [];
-let selectedTeam = "";
+const canvas=document.getElementById("gameCanvas");
+const ctx=canvas.getContext("2d");
 
-// Danh sách cầu thủ ví dụ
-let players = [
-{name:"Erling Haaland", team:"Manchester City", attack:95, defense:40, skill:90, speed:92, fitness:95, IQ:88},
-{name:"Kevin De Bruyne", team:"Manchester City", attack:92, defense:50, skill:94, speed:85, fitness:90, IQ:96},
-{name:"Mohamed Salah", team:"Liverpool", attack:94, defense:35, skill:93, speed:91, fitness:92, IQ:89},
-{name:"Harry Kane", team:"Tottenham Hotspur", attack:93, defense:38, skill:90, speed:85, fitness:91, IQ:90},
-{name:"Gabriel Martinelli", team:"Arsenal", attack:85, defense:40, skill:88, speed:87, fitness:89, IQ:85},
-{name:"Bruno Fernandes", team:"Manchester United", attack:91, defense:45, skill:92, speed:84, fitness:88, IQ:90},
-{name:"Riyad Mahrez", team:"Manchester City", attack:88, defense:35, skill:91, speed:86, fitness:87, IQ:88},
-{name:"Son Heung-min", team:"Tottenham Hotspur", attack:90, defense:37, skill:89, speed:90, fitness:92, IQ:87},
-{name:"Fabinho", team:"Liverpool", attack:70, defense:85, skill:82, speed:78, fitness:90, IQ:89},
-{name:"Bukayo Saka", team:"Arsenal", attack:87, defense:42, skill:90, speed:88, fitness:91, IQ:86}
-// Có thể thêm nhiều cầu thủ khác...
-];
+let score=0;
+let speed=5;
+let obstacles=[];
+let waterholes=[];
+let monsters=[];
+let gravity=0.6;
 
-// Bảng xếp hạng khởi tạo
-let ranking = teams.map(t=>({team:t, match:0, win:0, draw:0, lose:0, points:0}));
+let motor={x:50,y:300,width:40,height:40,vy:0,jumping:false,color:"red"};
 
-// Hiển thị danh sách đội
-let teamSelect = document.getElementById("teamSelect");
-teams.forEach(t=>{
-  let option = document.createElement("option");
-  option.value=t; option.text=t;
-  teamSelect.add(option);
+function drawMotor(){
+    ctx.fillStyle=motor.color;
+    ctx.fillRect(motor.x,motor.y,motor.width,motor.height);
+}
+
+function drawGround(){
+    ctx.fillStyle="#654321";
+    ctx.fillRect(0,350,canvas.width,50); // đất
+    ctx.fillStyle="#a0a0a0";
+    ctx.fillRect(0,360,canvas.width,10); // đường lộ
+}
+
+function drawObstacles(){
+    ctx.fillStyle="gray";
+    obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.width,o.height));
+}
+function drawWaterholes(){
+    ctx.fillStyle="blue";
+    waterholes.forEach(w=>ctx.fillRect(w.x,w.y,w.width,w.height));
+}
+function drawMonsters(){
+    ctx.fillStyle="purple";
+    monsters.forEach(m=>ctx.fillRect(m.x,m.y,m.width,m.height));
+}
+
+// tạo obstacle
+function createObstacle(){
+    obstacles.push({x:canvas.width,y:310,width:30,height:40});
+}
+function createWaterhole(){
+    waterholes.push({x:canvas.width,y:350,width:50,height:50});
+}
+function createMonster(){
+    monsters.push({x:canvas.width,y:300,width:40,height:50});
+}
+
+// cập nhật vật thể
+function updateObstacles(){
+    obstacles.forEach(o=>o.x-=speed);
+    obstacles=obstacles.filter(o=>o.x+o.width>0);
+}
+function updateWaterholes(){
+    waterholes.forEach(w=>w.x-=speed);
+    waterholes=waterholes.filter(w=>w.x+w.width>0);
+}
+function updateMonsters(){
+    monsters.forEach(m=>m.x-=speed);
+    monsters=monsters.filter(m=>m.x+m.width>0);
+}
+
+// va chạm
+function checkCollision(){
+    let hit=false;
+    obstacles.forEach(o=>{
+        if(motor.x<motor.x+motor.width && motor.x+motor.width>o.x &&
+           motor.y<motor.y+motor.height && motor.y+motor.height>o.y){
+            hit=true;
+        }
+    });
+    waterholes.forEach(w=>{
+        if(motor.x<motor.x+motor.width && motor.x+motor.width>w.x &&
+           motor.y<motor.y+motor.height && motor.y+motor.height>w.y){
+            hit=true;
+        }
+    });
+    monsters.forEach(m=>{
+        if(motor.x<motor.x+motor.width && motor.x+motor.width>m.x &&
+           motor.y<motor.y+motor.height && motor.y+motor.height>m.y){
+            hit=true;
+        }
+    });
+    return hit;
+}
+
+// nhảy
+document.addEventListener("keydown",e=>{
+    if(e.code==="Space" && !motor.jumping){
+        motor.vy=-12;
+        motor.jumping=true;
+    }
 });
 
-// Chọn đội
-function chooseTeam(){
-  selectedTeam = teamSelect.value;
-  document.getElementById("selectedTeam").innerText = "Bạn chọn: "+selectedTeam;
-  teamPlayers = players.filter(p=>p.team===selectedTeam);
-  updatePlayerTable();
+// game loop
+let frame=0;
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    drawGround();
+    drawMotor();
+    drawObstacles();
+    drawWaterholes();
+    drawMonsters();
+
+    // gravity
+    motor.vy+=gravity;
+    motor.y+=motor.vy;
+    if(motor.y>310){motor.y=310; motor.vy=0; motor.jumping=false;}
+
+    // tạo vật thể
+    if(frame%150===0) createObstacle();
+    if(frame%500===0) createWaterhole();
+    if(frame%700===0) createMonster();
+
+    // cập nhật vật thể
+    updateObstacles();
+    updateWaterholes();
+    updateMonsters();
+
+    // tính điểm
+    score+=0.1;
+    document.getElementById("score").innerText="Điểm: "+Math.floor(score);
+
+    // tăng tốc hoặc thêm vật thể khi đạt điểm
+    if(Math.floor(score)%100===0 && Math.floor(score)!==0){
+        speed+=0.5;
+    }
+
+    // check va chạm
+    if(checkCollision()){
+        alert("Game Over! Điểm: "+Math.floor(score));
+        score=0; speed=5; obstacles=[]; waterholes=[]; monsters=[]; motor.y=310; motor.vy=0; motor.jumping=false;
+    }
+
+    frame++;
+    requestAnimationFrame(gameLoop);
 }
 
-// Cập nhật bảng cầu thủ
-function updatePlayerTable(){
-  let tbody = document.querySelector("#playerTable tbody");
-  tbody.innerHTML="";
-  teamPlayers.forEach(p=>{
-    let tr = document.createElement("tr");
-    tr.innerHTML=`<td>${p.name}</td><td>${p.attack}</td><td>${p.defense}</td><td>${p.skill}</td><td>${p.speed}</td><td>${p.fitness}</td><td>${p.IQ}</td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-// Sim trận đấu đơn giản
-function simulateMatch(){
-  if(!selectedTeam){alert("Chọn đội trước!"); return;}
-  // Chọn đối thủ ngẫu nhiên khác đội của người chơi
-  let opponent = teams[Math.floor(Math.random()*teams.length)];
-  while(opponent===selectedTeam){opponent=teams[Math.floor(Math.random()*teams.length)];}
-  let oppPlayers = players.filter(p=>p.team===opponent);
-  // Tính điểm tấn công và phòng ngự
-  let playerScore = teamPlayers.reduce((a,p)=>a+p.attack+p.skill+p.speed+p.IQ,0);
-  let playerDef = teamPlayers.reduce((a,p)=>a+p.defense+p.fitness,0);
-  let oppScore = oppPlayers.reduce((a,p)=>a+p.attack+p.skill+p.speed+p.IQ,0);
-  let oppDef = oppPlayers.reduce((a,p)=>a+p.defense+p.fitness,0);
-  // Thêm yếu tố ngẫu nhiên
-  let playerGoal = Math.floor((playerScore/(playerScore+oppDef))*5 + Math.random()*2);
-  let oppGoal = Math.floor((oppScore/(oppScore+playerDef))*5 + Math.random()*2);
-  document.getElementById("matchResult").innerText = `${selectedTeam} ${playerGoal} - ${oppGoal} ${opponent}`;
-  // Cập nhật bảng xếp hạng
-  updateRanking(selectedTeam, opponent, playerGoal, oppGoal);
-}
-
-// Cập nhật bảng xếp hạng
-function updateRanking(teamA, teamB, goalA, goalB){
-  ranking.forEach(r=>{
-    if(r.team===teamA){r.match++; if(goalA>goalB){r.win++; r.points+=3;} else if(goalA===goalB){r.draw++; r.points+=1;} else {r.lose++;}}
-    if(r.team===teamB){r.match++; if(goalB>goalA){r.win++; r.points+=3;} else if(goalB===goalA){r.draw++; r.points+=1;} else {r.lose++;}}
-  });
-  ranking.sort((a,b)=>b.points-a.points);
-  // Hiển thị
-  let tbody = document.querySelector("#rankingTable tbody");
-  tbody.innerHTML="";
-  ranking.forEach(r=>{
-    let tr=document.createElement("tr");
-    tr.innerHTML=`<td>${r.team}</td><td>${r.match}</td><td>${r.win}</td><td>${r.draw}</td><td>${r.lose}</td><td>${r.points}</td>`;
-    tbody.appendChild(tr);
-  });
-}
+gameLoop();
 </script>
 </body>
 </html>
+
 
 
 
