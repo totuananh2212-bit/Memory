@@ -1,252 +1,59 @@
-
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Tô Ah</title>
+  <title>Sói Xám Adventure</title>
   <style>
-    body { margin: 0; background: #222; color: #fff; font-family: sans-serif; text-align: center; }
-    canvas { background: #87ceeb; display: block; margin: 10px auto; border: 2px solid #fff; }
-    #menu { margin-top: 20px; }
-    button { padding: 10px 20px; margin: 5px; font-size: 16px; border-radius: 8px; border: none; cursor: pointer; }
-    .start { background: #28a745; color: #fff; }
-    .reset { background: #dc3545; color: #fff; }
-    .color { background: #ffc107; color: #000; }
-    h1 { font-size: 32px; margin-top: 20px; }
+    body { margin: 0; background: #111; }
+    canvas { display: block; margin: auto; background: #eef; border: 3px solid #333; }
   </style>
 </head>
 <body>
-  <h1>Game Parkour Sói - <span style="color:yellow">Tô Ah</span></h1>
-  <canvas id="gameCanvas" width="800" height="400"></canvas>
-  <div id="menu">
-    <button class="start" onclick="startGame()">Bắt đầu chơi</button>
-    <button class="reset" onclick="resetGame()">Reset</button>
-    <button class="color" onclick="changeColor()">Đổi màu sói</button>
-  </div>
-
+<canvas id="game" width="900" height="300"></canvas>
 <script>
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let gameRunning = false;
-let level = 1;
-let maxLevel = 5;
-let lives = 3;
-let wolfColor = "gray";
+// Sói xám
+let wolf = { x: 80, y: 200, width: 50, height: 40, dy: 0, jumping: false, gravity: 1.2 };
 
-// Nhân vật sói
-let wolf = {
-  x: 50, y: 300, w: 40, h: 40,
-  dx: 0, dy: 0,
-  onGround: false
-};
+// Dốc địa hình
+let terrain = [];
+for (let x=0; x<=canvas.width; x+=50) {
+  let y = 250 - Math.sin(x*0.02) * 40; // tạo sóng dốc
+  terrain.push({x, y});
+}
 
-let keys = {};
-let gravity = 0.6;
-let jumpPower = -12;
-let holdJump = 0;
-
+// Đại bàng
+let eagles = [];
 let obstacles = [];
-let enemies = [];
-let door = { x: 750, y: 340, w: 30, h: 60 };
-
-// Bắt phím
-document.addEventListener("keydown", e => {
-  keys[e.key] = true;
-});
-document.addEventListener("keyup", e => {
-  keys[e.key] = false;
-  if (e.key === "s" || e.key === "S") holdJump = 0;
-});
-
-// Hàm tạo màn
-function generateLevel(lv) {
-  obstacles = [];
-  enemies = [];
-  // Đặt vật cản
-  for (let i = 0; i < lv; i++) {
-    obstacles.push({ x: 150 + i*120, y: 360 - i*20, w: 80, h: 20 });
-  }
-  // Thêm quái
-  for (let i = 0; i < lv; i++) {
-    enemies.push({ x: 200 + i*120, y: 340, w: 30, h: 30, dir: 1, minX: 200+i*120, maxX: 260+i*120 });
-  }
-}
-
-// Hàm bắt đầu game
-function startGame() {
-  gameRunning = true;
-  level = 1;
-  lives = 3;
-  wolf.x = 50; wolf.y = 300;
-  generateLevel(level);
-  gameLoop();
-}
-
-function resetGame() {
-  gameRunning = false;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle = "white";
-  ctx.font = "20px Arial";
-  ctx.fillText("Nhấn 'Bắt đầu chơi' để chơi lại", 250, 200);
-}
-
-function changeColor() {
-  const colors = ["gray","brown","black","white","blue"];
-  wolfColor = colors[Math.floor(Math.random()*colors.length)];
-}
+let score = 0;
 
 // Vẽ sói
 function drawWolf() {
-  ctx.fillStyle = wolfColor;
-  ctx.fillRect(wolf.x, wolf.y, wolf.w, wolf.h);
-  ctx.fillStyle = "white";
-  ctx.fillRect(wolf.x+10, wolf.y+10, 5, 5); // mắt
+  ctx.fillStyle = "gray";
+  ctx.fillRect(wolf.x, wolf.y, wolf.width, wolf.height);
 }
 
-// Vẽ cửa vàng
-function drawDoor() {
-  ctx.fillStyle = "gold";
-  ctx.fillRect(door.x, door.y, door.w, door.h);
-}
-
-// Vẽ chướng ngại
-function drawObstacles() {
-  ctx.fillStyle = "brown";
-  obstacles.forEach(o => {
-    ctx.fillRect(o.x, o.y, o.w, o.h);
-  });
-}
-
-// Vẽ quái
-function drawEnemies() {
-  ctx.fillStyle = "red";
-  enemies.forEach(e => {
-    ctx.fillRect(e.x, e.y, e.w, e.h);
-  });
-}
-
-// Update quái
-function updateEnemies() {
-  enemies.forEach(e => {
-    e.x += e.dir*2;
-    if (e.x < e.minX || e.x > e.maxX) e.dir *= -1;
-  });
-}
-
-// Vẽ nước
-function drawWater() {
-  ctx.fillStyle = "blue";
-  ctx.fillRect(0, 380, 800, 20);
-}
-
-// Game loop
-function gameLoop() {
-  if (!gameRunning) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // Nền
-  ctx.fillStyle = "#87ceeb";
-  ctx.fillRect(0,0,800,400);
-
-  // Input
-  if (keys["ArrowLeft"]) wolf.dx = -5;
-  else if (keys["ArrowRight"]) wolf.dx = 5;
-  else wolf.dx = 0;
-
-  if (keys["s"] || keys["S"]) {
-    if (wolf.onGround) {
-      holdJump++;
-      if (holdJump < 15) wolf.dy = jumpPower - holdJump*0.3;
-    }
+// Vẽ địa hình
+function drawTerrain(offset) {
+  ctx.beginPath();
+  ctx.moveTo(0, canvas.height);
+  for (let i=0; i<terrain.length; i++) {
+    let tx = (terrain[i].x - offset) % canvas.width;
+    if (tx < 0) tx += canvas.width;
+    ctx.lineTo(tx, terrain[i].y);
   }
-
-  // Vật lý
-  wolf.dy += gravity;
-  wolf.x += wolf.dx;
-  wolf.y += wolf.dy;
-
-  // Nước
-  if (wolf.y + wolf.h > 380) {
-    loseLife();
-  }
-
-  // Va chạm đất
-  if (wolf.y+wolf.h >= 380) {
-    wolf.y = 380-wolf.h;
-    wolf.dy = 0;
-    wolf.onGround = true;
-  } else wolf.onGround = false;
-
-  // Va chạm obstacles
-  obstacles.forEach(o => {
-    if (wolf.x < o.x+o.w && wolf.x+wolf.w > o.x &&
-        wolf.y < o.y+o.h && wolf.y+wolf.h > o.y) {
-      // Đứng trên
-      if (wolf.dy > 0) {
-        wolf.y = o.y-wolf.h;
-        wolf.dy = 0;
-        wolf.onGround = true;
-      }
-    }
-  });
-
-  // Quái
-  enemies.forEach(e => {
-    if (wolf.x < e.x+e.w && wolf.x+wolf.w > e.x &&
-        wolf.y < e.y+e.h && wolf.y+wolf.h > e.y) {
-      loseLife();
-    }
-  });
-
-  // Cửa
-  if (wolf.x < door.x+door.w && wolf.x+wolf.w > door.x &&
-      wolf.y < door.y+door.h && wolf.y+wolf.h > door.y) {
-    nextLevel();
-  }
-
-  // Vẽ
-  drawObstacles();
-  drawEnemies();
-  updateEnemies();
-  drawDoor();
-  drawWater();
-  drawWolf();
-
-  ctx.fillStyle="black";
-  ctx.font="16px Arial";
-  ctx.fillText("Mạng: "+lives+" | Màn: "+level, 10,20);
-
-  requestAnimationFrame(gameLoop);
+  ctx.lineTo(canvas.width, canvas.height);
+  ctx.closePath();
+  ctx.fillStyle = "#5a3";
+  ctx.fill();
 }
 
-function loseLife() {
-  lives--;
-  if (lives <= 0) {
-    gameRunning = false;
-    ctx.fillStyle="black";
-    ctx.font="24px Arial";
-    ctx.fillText("Game Over!", 340,200);
-  } else {
-    wolf.x=50; wolf.y=300; wolf.dy=0;
-  }
-}
+// Lấy mặt đất tại vị trí x
+function groundAt(x, offset) {
+  let i = Math.floor(((x+offset) % canvas.width)
 
-function nextLevel() {
-  if (level < maxLevel) {
-    level++;
-    wolf.x=50; wolf.y=300; wolf.dy=0;
-    generateLevel(level);
-  } else {
-    gameRunning=false;
-    ctx.fillStyle="black";
-    ctx.font="20px Arial";
-    ctx.fillText("Bạn thật là một người đầy nghị lực - Good luck", 200,200);
-  }
-}
-</script>
-</body>
-</html>
 
 
 
