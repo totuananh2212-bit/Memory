@@ -1,115 +1,248 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>WOLF by ToAh</title>
-<style>
-  body { margin:0; overflow:hidden; background:#87CEEB; font-family:sans-serif; }
-  canvas { display:block; background:#87CEEB; margin:0 auto; }
-  #menu { position:absolute; width:100%; height:100%; top:0; left:0; background:rgba(0,0,0,0.7);
-          display:flex; flex-direction:column; justify-content:center; align-items:center; color:white; }
-  #menu input { font-size:20px; padding:5px; margin:10px; }
-  #menu button { font-size:20px; padding:5px 15px; margin:10px; }
-  #menu select { font-size:20px; padding:5px; margin:10px; }
-</style>
+  <meta charset="UTF-8">
+  <title>Tô Ah</title>
+  <style>
+    body { margin: 0; background: #222; color: #fff; font-family: sans-serif; text-align: center; }
+    canvas { background: #87ceeb; display: block; margin: 10px auto; border: 2px solid #fff; }
+    #menu { margin-top: 20px; }
+    button { padding: 10px 20px; margin: 5px; font-size: 16px; border-radius: 8px; border: none; cursor: pointer; }
+    .start { background: #28a745; color: #fff; }
+    .reset { background: #dc3545; color: #fff; }
+    .color { background: #ffc107; color: #000; }
+    h1 { font-size: 32px; margin-top: 20px; }
+  </style>
 </head>
 <body>
-<div id="menu">
-  <h1>WOLF by ToAh</h1>
-  <input type="text" id="playerName" placeholder="Enter name"/>
-  <select id="playerColor">
-    <option value="gray">Gray</option>
-    <option value="blue">Blue</option>
-    <option value="red">Red</option>
-    <option value="green">Green</option>
-    <option value="yellow">Yellow</option>
-    <option value="purple">Purple</option>
-  </select>
-  <button onclick="startGame()">Start Game</button>
-</div>
-<canvas id="gameCanvas" width="800" height="600"></canvas>
+  <h1>Game Parkour Sói - <span style="color:yellow">Tô Ah</span></h1>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+  <div id="menu">
+    <button class="start" onclick="startGame()">Bắt đầu chơi</button>
+    <button class="reset" onclick="resetGame()">Reset</button>
+    <button class="color" onclick="changeColor()">Đổi màu sói</button>
+  </div>
+
 <script>
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
-let playerName="", playerColor="gray";
-let keys={};
-let player, platforms=[], mushrooms=[], enemies=[], bosses=[], fireballs=[];
-let level=1;
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-document.addEventListener("keydown", e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup", e=>keys[e.key.toLowerCase()]=false);
+let gameRunning = false;
+let level = 1;
+let maxLevel = 5;
+let lives = 3;
+let wolfColor = "gray";
 
-function startGame(){
-  playerName=document.getElementById("playerName").value||"Wolf";
-  playerColor=document.getElementById("playerColor").value;
-  document.getElementById("menu").style.display="none";
-  initLevel(level);
+// Nhân vật sói
+let wolf = {
+  x: 50, y: 300, w: 40, h: 40,
+  dx: 0, dy: 0,
+  onGround: false
+};
+
+let keys = {};
+let gravity = 0.6;
+let jumpPower = -12;
+let holdJump = 0;
+
+let obstacles = [];
+let enemies = [];
+let door = { x: 750, y: 340, w: 30, h: 60 };
+
+// Bắt phím
+document.addEventListener("keydown", e => {
+  keys[e.key] = true;
+});
+document.addEventListener("keyup", e => {
+  keys[e.key] = false;
+  if (e.key === "s" || e.key === "S") holdJump = 0;
+});
+
+// Hàm tạo màn
+function generateLevel(lv) {
+  obstacles = [];
+  enemies = [];
+  // Đặt vật cản
+  for (let i = 0; i < lv; i++) {
+    obstacles.push({ x: 150 + i*120, y: 360 - i*20, w: 80, h: 20 });
+  }
+  // Thêm quái
+  for (let i = 0; i < lv; i++) {
+    enemies.push({ x: 200 + i*120, y: 340, w: 30, h: 30, dir: 1, minX: 200+i*120, maxX: 260+i*120 });
+  }
+}
+
+// Hàm bắt đầu game
+function startGame() {
+  gameRunning = true;
+  level = 1;
+  lives = 3;
+  wolf.x = 50; wolf.y = 300;
+  generateLevel(level);
+  gameLoop();
+}
+
+function resetGame() {
+  gameRunning = false;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = "white";
+  ctx.font = "20px Arial";
+  ctx.fillText("Nhấn 'Bắt đầu chơi' để chơi lại", 250, 200);
+}
+
+function changeColor() {
+  const colors = ["gray","brown","black","white","blue"];
+  wolfColor = colors[Math.floor(Math.random()*colors.length)];
+}
+
+// Vẽ sói
+function drawWolf() {
+  ctx.fillStyle = wolfColor;
+  ctx.fillRect(wolf.x, wolf.y, wolf.w, wolf.h);
+  ctx.fillStyle = "white";
+  ctx.fillRect(wolf.x+10, wolf.y+10, 5, 5); // mắt
+}
+
+// Vẽ cửa vàng
+function drawDoor() {
+  ctx.fillStyle = "gold";
+  ctx.fillRect(door.x, door.y, door.w, door.h);
+}
+
+// Vẽ chướng ngại
+function drawObstacles() {
+  ctx.fillStyle = "brown";
+  obstacles.forEach(o => {
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+  });
+}
+
+// Vẽ quái
+function drawEnemies() {
+  ctx.fillStyle = "red";
+  enemies.forEach(e => {
+    ctx.fillRect(e.x, e.y, e.w, e.h);
+  });
+}
+
+// Update quái
+function updateEnemies() {
+  enemies.forEach(e => {
+    e.x += e.dir*2;
+    if (e.x < e.minX || e.x > e.maxX) e.dir *= -1;
+  });
+}
+
+// Vẽ nước
+function drawWater() {
+  ctx.fillStyle = "blue";
+  ctx.fillRect(0, 380, 800, 20);
+}
+
+// Game loop
+function gameLoop() {
+  if (!gameRunning) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Nền
+  ctx.fillStyle = "#87ceeb";
+  ctx.fillRect(0,0,800,400);
+
+  // Input
+  if (keys["ArrowLeft"]) wolf.dx = -5;
+  else if (keys["ArrowRight"]) wolf.dx = 5;
+  else wolf.dx = 0;
+
+  if (keys["s"] || keys["S"]) {
+    if (wolf.onGround) {
+      holdJump++;
+      if (holdJump < 15) wolf.dy = jumpPower - holdJump*0.3;
+    }
+  }
+
+  // Vật lý
+  wolf.dy += gravity;
+  wolf.x += wolf.dx;
+  wolf.y += wolf.dy;
+
+  // Nước
+  if (wolf.y + wolf.h > 380) {
+    loseLife();
+  }
+
+  // Va chạm đất
+  if (wolf.y+wolf.h >= 380) {
+    wolf.y = 380-wolf.h;
+    wolf.dy = 0;
+    wolf.onGround = true;
+  } else wolf.onGround = false;
+
+  // Va chạm obstacles
+  obstacles.forEach(o => {
+    if (wolf.x < o.x+o.w && wolf.x+wolf.w > o.x &&
+        wolf.y < o.y+o.h && wolf.y+wolf.h > o.y) {
+      // Đứng trên
+      if (wolf.dy > 0) {
+        wolf.y = o.y-wolf.h;
+        wolf.dy = 0;
+        wolf.onGround = true;
+      }
+    }
+  });
+
+  // Quái
+  enemies.forEach(e => {
+    if (wolf.x < e.x+e.w && wolf.x+wolf.w > e.x &&
+        wolf.y < e.y+e.h && wolf.y+wolf.h > e.y) {
+      loseLife();
+    }
+  });
+
+  // Cửa
+  if (wolf.x < door.x+door.w && wolf.x+wolf.w > door.x &&
+      wolf.y < door.y+door.h && wolf.y+wolf.h > door.y) {
+    nextLevel();
+  }
+
+  // Vẽ
+  drawObstacles();
+  drawEnemies();
+  updateEnemies();
+  drawDoor();
+  drawWater();
+  drawWolf();
+
+  ctx.fillStyle="black";
+  ctx.font="16px Arial";
+  ctx.fillText("Mạng: "+lives+" | Màn: "+level, 10,20);
+
   requestAnimationFrame(gameLoop);
 }
 
-function Player(x,y,color){
-  this.x=x; this.y=y; this.width=50; this.height=50;
-  this.color=color; this.velY=0; this.onGround=false; this.isBig=false; this.canShoot=false;
-}
-Player.prototype.update=function(){
-  if(keys["arrowleft"]) this.x-=5;
-  if(keys["arrowright"]) this.x+=5;
-  if(keys["s"] && this.onGround){ this.velY=-15; this.onGround=false; }
-  this.velY+=1; if(this.velY>15) this.velY=15;
-  this.y+=this.velY;
-  if(this.y+this.height>=550){ this.y=550-this.height; this.velY=0; this.onGround=true; }
-};
-Player.prototype.grow=function(){
-  if(!this.isBig){ this.width*=1.5; this.height*=1.5; this.isBig=true; this.canShoot=true; }
-};
-Player.prototype.draw=function(){ ctx.fillStyle=this.color; ctx.fillRect(this.x,this.y,this.width,this.height); };
-
-function Platform(x,y,w,h){ this.x=x; this.y=y; this.width=w; this.height=h; }
-Platform.prototype.draw=function(){ ctx.fillStyle="black"; ctx.fillRect(this.x,this.y,this.width,this.height); };
-
-function Mushroom(x,y){ this.x=x; this.y=y; this.width=30; this.height=30; }
-Mushroom.prototype.draw=function(){ ctx.fillStyle="red"; ctx.fillRect(this.x,this.y,this.width,this.height); };
-
-function Enemy(x,y,speed){ this.x=x; this.y=y; this.width=40; this.height=40; this.speed=speed; }
-Enemy.prototype.update=function(){ this.x+=this.speed; if(this.x<=0||this.x+this.width>=800) this.speed*=-1; };
-Enemy.prototype.draw=function(){ ctx.fillStyle="green"; ctx.fillRect(this.x,this.y,this.width,this.height); };
-
-function Boss(x,y,health){ this.x=x; this.y=y; this.width=100; this.height=100; this.health=health; this.speed=3; }
-Boss.prototype.update=function(){ this.x+=this.speed; if(this.x<=0||this.x+this.width>=800) this.speed*=-1; };
-Boss.prototype.draw=function(){ ctx.fillStyle="purple"; ctx.fillRect(this.x,this.y,this.width,this.height); };
-
-function Fireball(x,y,direction){ this.x=x; this.y=y; this.width=15; this.height=15; this.speed=10*direction; }
-Fireball.prototype.update=function(){ this.x+=this.speed; };
-Fireball.prototype.draw=function(){ ctx.fillStyle="yellow"; ctx.fillRect(this.x,this.y,this.width,this.height); };
-
-function initLevel(lv){
-  player=new Player(100,500,playerColor);
-  platforms=[new Platform(0,550,800,50), new Platform(200,450-20*(lv-1),150,20), new Platform(500,350-20*(lv-1),150,20)];
-  mushrooms=[new Mushroom(220,420-20*(lv-1)), new Mushroom(520,320-20*(lv-1))];
-  enemies=[]; for(let i=0;i<lv+1;i++) enemies.push(new Enemy(Math.random()*700,500,2+lv));
-  bosses=[new Boss(650,450,10+lv*2)];
-  fireballs=[];
+function loseLife() {
+  lives--;
+  if (lives <= 0) {
+    gameRunning = false;
+    ctx.fillStyle="black";
+    ctx.font="24px Arial";
+    ctx.fillText("Game Over!", 340,200);
+  } else {
+    wolf.x=50; wolf.y=300; wolf.dy=0;
+  }
 }
 
-function rectsCollide(a,b){ return a.x<a.x+b.width && a.x+b.width>b.x && a.y<a.y+b.height && a.y+b.height>b.y; }
-
-function gameLoop(){
-  ctx.clearRect(0,0,800,600);
-  player.update();
-  platforms.forEach(p=>{ if(player.y+player.height>=p.y && player.y+player.height<=p.y+player.velY+15 && player.x+player.width>p.x && player.x<p.x+p.width){ player.y=p.y-player.height; player.velY=0; player.onGround=true; }});
-  mushrooms.forEach((m,i)=>{ if(player.x< m.x+m.width && player.x+player.width>m.x && player.y< m.y+m.height && player.y+player.height>m.y){ mushrooms.splice(i,1); player.grow(); }});
-  enemies.forEach(e=>{ e.update(); if(player.x< e.x+e.width && player.x+player.width>e.x && player.y< e.y+e.height && player.y+player.height>e.y){ console.log(playerName+" bị thương!"); } });
-  fireballs.forEach((f,i)=>{ f.update(); enemies.forEach((e,j)=>{ if(rectsCollide(f,e)){ enemies.splice(j,1); fireballs.splice(i,1); } }); bosses.forEach((b,k)=>{ if(rectsCollide(f,b)){ b.health--; fireballs.splice(i,1); if(b.health<=0){ bosses.splice(k,1); console.log("BOSS màn "+level+" bị tiêu diệt!"); } } }); });
-  if(keys["f"] && player.canShoot && (!this.lastShot || Date.now()-this.lastShot>300)){ let dir=keys["arrowright"]?1:-1; fireballs.push(new Fireball(player.x+player.width/2,player.y+player.height/2,dir)); this.lastShot=Date.now(); }
-  player.draw();
-  platforms.forEach(p=>p.draw());
-  mushrooms.forEach(m=>m.draw());
-  enemies.forEach(e=>e.draw());
-  bosses.forEach(b=>b.draw());
-  fireballs.forEach(f=>f.draw());
-  ctx.fillStyle="black"; ctx.fillText("Player: "+playerName+"  Level: "+level,10,20);
-  if(bosses.length===0){ level++; if(level>5){ alert("Bạn đã chiến thắng tất cả màn!"); return; } initLevel(level); }
-  requestAnimationFrame(gameLoop);
+function nextLevel() {
+  if (level < maxLevel) {
+    level++;
+    wolf.x=50; wolf.y=300; wolf.dy=0;
+    generateLevel(level);
+  } else {
+    gameRunning=false;
+    ctx.fillStyle="black";
+    ctx.font="20px Arial";
+    ctx.fillText("Bạn thật là một người đầy nghị lực - Good luck", 200,200);
+  }
 }
 </script>
 </body>
