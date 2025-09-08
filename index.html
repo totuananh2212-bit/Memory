@@ -2,221 +2,131 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Bida 8 Bi 2D</title>
+<title>Game Quản Lý Bóng Đá Premier League</title>
 <style>
-  body { display:flex; justify-content:center; align-items:center; height:100vh; background:#2b2b2b; margin:0; font-family:sans-serif; }
-  canvas { background:#006400; border:3px solid #fff; }
-  #info { position:absolute; top:10px; left:10px; color:#fff; }
-  #powerBar { width:200px; height:20px; background:#555; margin-top:5px; }
-  #powerFill { height:20px; width:0%; background:red; }
+body{font-family:sans-serif;background:#2b2b2b;color:#fff;margin:0;padding:0;}
+#container{display:flex;justify-content:space-around;padding:20px;}
+#teams,#players,#match,#ranking{background:#1a1a1a;padding:15px;border-radius:8px;width:23%;}
+button{margin-top:5px;padding:5px 10px;background:#006400;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+h3{margin-top:0;}
+table{width:100%;border-collapse:collapse;margin-top:10px;}
+th,td{border:1px solid #555;padding:4px;text-align:center;}
 </style>
 </head>
 <body>
-<div id="info">
-  <div id="score">Điểm: 0</div>
-  <div id="turn">Lượt: Người chơi</div>
-  <div id="powerBar"><div id="powerFill"></div></div>
+<div id="container">
+  <div id="teams">
+    <h3>Chọn đội bóng</h3>
+    <select id="teamSelect"></select>
+    <button onclick="chooseTeam()">Chọn</button>
+    <div id="selectedTeam"></div>
+  </div>
+  <div id="players">
+    <h3>Đội hình cầu thủ</h3>
+    <table id="playerTable"><thead><tr><th>Tên</th><th>Tấn công</th><th>Phòng ngự</th><th>Kỹ thuật</th><th>Tốc độ</th><th>Thể lực</th><th>IQ</th></tr></thead><tbody></tbody></table>
+  </div>
+  <div id="match">
+    <h3>Sim trận đấu</h3>
+    <button onclick="simulateMatch()">Sim trận</button>
+    <div id="matchResult"></div>
+  </div>
+  <div id="ranking">
+    <h3>Bảng xếp hạng</h3>
+    <table id="rankingTable"><thead><tr><th>Đội</th><th>Trận</th><th>Thắng</th><th>Hòa</th><th>Thua</th><th>Điểm</th></tr></thead><tbody></tbody></table>
+  </div>
 </div>
-<canvas id="bida" width="800" height="400"></canvas>
 
 <script>
-const canvas = document.getElementById('bida');
-const ctx = canvas.getContext('2d');
+// Danh sách đội Premier League
+let teams = ["Arsenal","Aston Villa","Bournemouth","Brentford","Brighton","Chelsea","Crystal Palace","Everton","Fulham","Liverpool","Luton Town","Manchester City","Manchester United","Newcastle United","Nottingham Forest","Sheffield United","Tottenham Hotspur","West Ham United","Wolverhampton","Southampton"];
+let teamPlayers = [];
+let selectedTeam = "";
 
-// Lỗ bàn
-const holes = [
-  {x:0,y:0},{x:canvas.width/2,y:0},{x:canvas.width,y:0},
-  {x:0,y:canvas.height},{x:canvas.width/2,y:canvas.height},{x:canvas.width,y:canvas.height}
+// Danh sách cầu thủ ví dụ
+let players = [
+{name:"Erling Haaland", team:"Manchester City", attack:95, defense:40, skill:90, speed:92, fitness:95, IQ:88},
+{name:"Kevin De Bruyne", team:"Manchester City", attack:92, defense:50, skill:94, speed:85, fitness:90, IQ:96},
+{name:"Mohamed Salah", team:"Liverpool", attack:94, defense:35, skill:93, speed:91, fitness:92, IQ:89},
+{name:"Harry Kane", team:"Tottenham Hotspur", attack:93, defense:38, skill:90, speed:85, fitness:91, IQ:90},
+{name:"Gabriel Martinelli", team:"Arsenal", attack:85, defense:40, skill:88, speed:87, fitness:89, IQ:85},
+{name:"Bruno Fernandes", team:"Manchester United", attack:91, defense:45, skill:92, speed:84, fitness:88, IQ:90},
+{name:"Riyad Mahrez", team:"Manchester City", attack:88, defense:35, skill:91, speed:86, fitness:87, IQ:88},
+{name:"Son Heung-min", team:"Tottenham Hotspur", attack:90, defense:37, skill:89, speed:90, fitness:92, IQ:87},
+{name:"Fabinho", team:"Liverpool", attack:70, defense:85, skill:82, speed:78, fitness:90, IQ:89},
+{name:"Bukayo Saka", team:"Arsenal", attack:87, defense:42, skill:90, speed:88, fitness:91, IQ:86}
+// Có thể thêm nhiều cầu thủ khác...
 ];
 
-// 8 bi mục tiêu + bi cái trắng
-let balls = [
-  {x:100, y:200, r:12, color:'white', vx:0, vy:0, isCue:true, number:0},
-  {x:400, y:100, r:12, color:'red', vx:0, vy:0, number:1},
-  {x:450, y:150, r:12, color:'orange', vx:0, vy:0, number:2},
-  {x:500, y:200, r:12, color:'yellow', vx:0, vy:0, number:3},
-  {x:550, y:250, r:12, color:'green', vx:0, vy:0, number:4},
-  {x:600, y:150, r:12, color:'blue', vx:0, vy:0, number:5},
-  {x:650, y:200, r:12, color:'purple', vx:0, vy:0, number:6},
-  {x:700, y:150, r:12, color:'brown', vx:0, vy:0, number:7},
-  {x:750, y:200, r:12, color:'black', vx:0, vy:0, number:8}
-];
+// Bảng xếp hạng khởi tạo
+let ranking = teams.map(t=>({team:t, match:0, win:0, draw:0, lose:0, points:0}));
 
-let score = 0;
-let turn = "Người chơi";
-let currentNumber = 1;
-let mouseDown = false;
-let mouseStart = {x:0,y:0};
+// Hiển thị danh sách đội
+let teamSelect = document.getElementById("teamSelect");
+teams.forEach(t=>{
+  let option = document.createElement("option");
+  option.value=t; option.text=t;
+  teamSelect.add(option);
+});
 
-// Vẽ bi với viền và đổ bóng
-function drawBallWithEdge(b){
-    ctx.save();
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
-    ctx.shadowColor = 'rgba(0,0,0,0.5)';
-
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-    ctx.fillStyle = b.color;
-    ctx.fill();
-    ctx.strokeStyle = 'black';
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    ctx.restore();
+// Chọn đội
+function chooseTeam(){
+  selectedTeam = teamSelect.value;
+  document.getElementById("selectedTeam").innerText = "Bạn chọn: "+selectedTeam;
+  teamPlayers = players.filter(p=>p.team===selectedTeam);
+  updatePlayerTable();
 }
 
-// Vẽ bàn
-function drawTable(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  // lỗ
-  holes.forEach(h=>{
-    ctx.beginPath();
-    ctx.arc(h.x,h.y,15,0,2*Math.PI);
-    ctx.fillStyle='black';
-    ctx.fill();
-  });
-  // bi
-  balls.forEach(b=> drawBallWithEdge(b));
-}
-
-// Cập nhật bi + ma sát
-function updateBalls(){
-  balls.forEach(b=>{
-    b.x += b.vx;
-    b.y += b.vy;
-    b.vx *= 0.98;
-    b.vy *= 0.98;
-
-    // va bi bàn
-    if(b.x-b.r<0 || b.x+b.r>canvas.width) b.vx*=-1;
-    if(b.y-b.r<0 || b.y+b.r>canvas.height) b.vy*=-1;
-
-    // kiểm tra lỗ
-    holes.forEach(h=>{
-      const dx = b.x - h.x;
-      const dy = b.y - h.y;
-      if(Math.sqrt(dx*dx+dy*dy)<15){
-        if(b.isCue){
-          resetCue();
-          switchTurn();
-        } else if(b.number === currentNumber){
-          score +=1;
-          balls = balls.filter(bb=>bb!==b);
-          currentNumber +=1;
-        } else {
-          switchTurn();
-        }
-      }
-    });
+// Cập nhật bảng cầu thủ
+function updatePlayerTable(){
+  let tbody = document.querySelector("#playerTable tbody");
+  tbody.innerHTML="";
+  teamPlayers.forEach(p=>{
+    let tr = document.createElement("tr");
+    tr.innerHTML=`<td>${p.name}</td><td>${p.attack}</td><td>${p.defense}</td><td>${p.skill}</td><td>${p.speed}</td><td>${p.fitness}</td><td>${p.IQ}</td>`;
+    tbody.appendChild(tr);
   });
 }
 
-// Va chạm bi với xử lý đẩy ra khỏi nhau
-function detectCollision(){
-  for(let i=0;i<balls.length;i++){
-    for(let j=i+1;j<balls.length;j++){
-      let b1 = balls[i], b2 = balls[j];
-      let dx = b2.x - b1.x;
-      let dy = b2.y - b1.y;
-      let dist = Math.sqrt(dx*dx+dy*dy);
-      if(dist < b1.r + b2.r){
-        let overlap = (b1.r + b2.r) - dist;
-        let nx = dx/dist;
-        let ny = dy/dist;
-        b1.x -= nx*overlap/2;
-        b1.y -= ny*overlap/2;
-        b2.x += nx*overlap/2;
-        b2.y += ny*overlap/2;
-
-        let angle = Math.atan2(dy,dx);
-        let speed1 = Math.sqrt(b1.vx*b1.vx+b1.vy*b1.vy);
-        let speed2 = Math.sqrt(b2.vx*b2.vx+b2.vy*b2.vy);
-        b1.vx = speed2*Math.cos(angle);
-        b1.vy = speed2*Math.sin(angle);
-        b2.vx = speed1*Math.cos(angle+Math.PI);
-        b2.vy = speed1*Math.sin(angle+Math.PI);
-      }
-    }
-  }
+// Sim trận đấu đơn giản
+function simulateMatch(){
+  if(!selectedTeam){alert("Chọn đội trước!"); return;}
+  // Chọn đối thủ ngẫu nhiên khác đội của người chơi
+  let opponent = teams[Math.floor(Math.random()*teams.length)];
+  while(opponent===selectedTeam){opponent=teams[Math.floor(Math.random()*teams.length)];}
+  let oppPlayers = players.filter(p=>p.team===opponent);
+  // Tính điểm tấn công và phòng ngự
+  let playerScore = teamPlayers.reduce((a,p)=>a+p.attack+p.skill+p.speed+p.IQ,0);
+  let playerDef = teamPlayers.reduce((a,p)=>a+p.defense+p.fitness,0);
+  let oppScore = oppPlayers.reduce((a,p)=>a+p.attack+p.skill+p.speed+p.IQ,0);
+  let oppDef = oppPlayers.reduce((a,p)=>a+p.defense+p.fitness,0);
+  // Thêm yếu tố ngẫu nhiên
+  let playerGoal = Math.floor((playerScore/(playerScore+oppDef))*5 + Math.random()*2);
+  let oppGoal = Math.floor((oppScore/(oppScore+playerDef))*5 + Math.random()*2);
+  document.getElementById("matchResult").innerText = `${selectedTeam} ${playerGoal} - ${oppGoal} ${opponent}`;
+  // Cập nhật bảng xếp hạng
+  updateRanking(selectedTeam, opponent, playerGoal, oppGoal);
 }
 
-// Reset bi cái
-function resetCue(){
-  let cue = balls.find(b=>b.isCue);
-  cue.x = 100;
-  cue.y = 200;
-  cue.vx=0;
-  cue.vy=0;
+// Cập nhật bảng xếp hạng
+function updateRanking(teamA, teamB, goalA, goalB){
+  ranking.forEach(r=>{
+    if(r.team===teamA){r.match++; if(goalA>goalB){r.win++; r.points+=3;} else if(goalA===goalB){r.draw++; r.points+=1;} else {r.lose++;}}
+    if(r.team===teamB){r.match++; if(goalB>goalA){r.win++; r.points+=3;} else if(goalB===goalA){r.draw++; r.points+=1;} else {r.lose++;}}
+  });
+  ranking.sort((a,b)=>b.points-a.points);
+  // Hiển thị
+  let tbody = document.querySelector("#rankingTable tbody");
+  tbody.innerHTML="";
+  ranking.forEach(r=>{
+    let tr=document.createElement("tr");
+    tr.innerHTML=`<td>${r.team}</td><td>${r.match}</td><td>${r.win}</td><td>${r.draw}</td><td>${r.lose}</td><td>${r.points}</td>`;
+    tbody.appendChild(tr);
+  });
 }
-
-// Đổi lượt
-function switchTurn(){
-  turn = turn==="Người chơi"?"AI":"Người chơi";
-  document.getElementById('turn').innerText = "Lượt: "+turn;
-}
-
-// Chuột kéo để đánh
-canvas.addEventListener('mousedown', e=>{
-  mouseDown=true;
-  mouseStart.x=e.offsetX;
-  mouseStart.y=e.offsetY;
-});
-
-canvas.addEventListener('mousemove', e=>{
-  if(mouseDown){
-    let dx = e.offsetX - mouseStart.x;
-    let dy = e.offsetY - mouseStart.y;
-    let power = Math.min(100, Math.sqrt(dx*dx+dy*dy));
-    document.getElementById('powerFill').style.width = power + "%";
-  }
-});
-
-canvas.addEventListener('mouseup', e=>{
-  if(mouseDown && turn==="Người chơi"){
-    mouseDown=false;
-    let cue = balls.find(b=>b.isCue);
-    let dx = e.offsetX - mouseStart.x;
-    let dy = e.offsetY - mouseStart.y;
-    cue.vx = dx/5;
-    cue.vy = dy/5;
-    document.getElementById('powerFill').style.width = 0;
-  }
-});
-
-// AI đánh đơn giản
-function aiPlay(){
-  let cue = balls.find(b=>b.isCue);
-  let target = balls.find(b=>b.number===currentNumber);
-  if(!target) return;
-  let dx = target.x - cue.x + (Math.random()-0.5)*20; 
-  let dy = target.y - cue.y + (Math.random()-0.5)*20;
-  cue.vx = dx/15;
-  cue.vy = dy/15;
-}
-
-// Game loop
-function gameLoop(){
-  updateBalls();
-  detectCollision();
-  drawTable();
-  document.getElementById('score').innerText = "Điểm: "+score;
-
-  if(turn==="AI"){
-    let cue = balls.find(b=>b.isCue);
-    if(Math.abs(cue.vx)<0.1 && Math.abs(cue.vy)<0.1){
-      aiPlay();
-    }
-  }
-
-  requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
 </script>
 </body>
 </html>
+
 
 
 
