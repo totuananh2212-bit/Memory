@@ -2,57 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sói Xám Adventure</title>
+  <title>Dino Jump</title>
   <style>
-    body { margin: 0; background: #111; }
-    canvas { display: block; margin: auto; background: #eef; border: 3px solid #333; }
+    body { margin: 0; overflow: hidden; background: #f7f7f7; }
+    canvas { display: block; margin: auto; background: white; border: 2px solid #333; }
   </style>
 </head>
 <body>
-<canvas id="game" width="900" height="300"></canvas>
+<canvas id="game" width="800" height="200"></canvas>
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Sói xám
-let wolf = { x: 80, y: 200, width: 50, height: 40, dy: 0, jumping: false, gravity: 1.2 };
-
-// Dốc địa hình
-let terrain = [];
-for (let x=0; x<=canvas.width; x+=50) {
-  let y = 250 - Math.sin(x*0.02) * 40; // tạo sóng dốc
-  terrain.push({x, y});
-}
-
-// Đại bàng
-let eagles = [];
+let dino = { x: 50, y: 150, width: 40, height: 40, dy: 0, jumping: false };
 let obstacles = [];
 let score = 0;
 
-// Vẽ sói
-function drawWolf() {
-  ctx.fillStyle = "gray";
-  ctx.fillRect(wolf.x, wolf.y, wolf.width, wolf.height);
+function drawDino() {
+  ctx.fillStyle = "green";
+  ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
 }
 
-// Vẽ địa hình
-function drawTerrain(offset) {
-  ctx.beginPath();
-  ctx.moveTo(0, canvas.height);
-  for (let i=0; i<terrain.length; i++) {
-    let tx = (terrain[i].x - offset) % canvas.width;
-    if (tx < 0) tx += canvas.width;
-    ctx.lineTo(tx, terrain[i].y);
+function drawObstacles() {
+  ctx.fillStyle = "red";
+  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
+}
+
+function update() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawDino();
+  drawObstacles();
+
+  if (dino.jumping) {
+    dino.dy += 1.5;
+    dino.y += dino.dy;
+    if (dino.y >= 150) {
+      dino.y = 150;
+      dino.jumping = false;
+    }
   }
-  ctx.lineTo(canvas.width, canvas.height);
-  ctx.closePath();
-  ctx.fillStyle = "#5a3";
-  ctx.fill();
+
+  obstacles.forEach(o => {
+    o.x -= 5;
+    if (o.x + o.width < 0) {
+      obstacles.shift();
+      score++;
+    }
+    if (dino.x < o.x + o.width && dino.x + dino.width > o.x && dino.y < o.y + o.height && dino.y + dino.height > o.y) {
+      alert("Game Over! Score: " + score);
+      document.location.reload();
+    }
+  });
+
+  if (Math.random() < 0.02) {
+    obstacles.push({ x: canvas.width, y: 160, width: 20, height: 40 });
+  }
+
+  ctx.fillStyle = "black";
+  ctx.font = "20px Arial";
+  ctx.fillText("Score: " + score, 10, 20);
+
+  requestAnimationFrame(update);
 }
 
-// Lấy mặt đất tại vị trí x
-function groundAt(x, offset) {
-  let i = Math.floor(((x+offset) % canvas.width)
+document.addEventListener("keydown", e => {
+  if (e.code === "Space" && !dino.jumping) {
+    dino.jumping = true;
+    dino.dy = -20;
+  }
+});
+
+update();
+</script>
+</body>
+</html>
+
 
 
 
