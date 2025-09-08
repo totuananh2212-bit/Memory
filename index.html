@@ -2,52 +2,63 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Bida 6 lỗ</title>
+<title>Bida 8 Bi 2D</title>
 <style>
-  body { display:flex; justify-content:center; align-items:center; height:100vh; background:#2b2b2b; margin:0; }
+  body { display:flex; justify-content:center; align-items:center; height:100vh; background:#2b2b2b; margin:0; font-family:sans-serif; }
   canvas { background:#006400; border:3px solid #fff; }
-  #score { position:absolute; top:20px; color:#fff; font-size:24px; left:20px; }
-  #turn { position:absolute; top:50px; color:#fff; font-size:20px; left:20px; }
+  #info { position:absolute; top:10px; left:10px; color:#fff; }
+  #powerBar { width:200px; height:20px; background:#555; margin-top:5px; }
+  #powerFill { height:20px; width:0%; background:red; }
 </style>
 </head>
 <body>
-<div id="score">Điểm: 0</div>
-<div id="turn">Lượt: Người chơi 1</div>
-<canvas id="bida" width="600" height="300"></canvas>
+<div id="info">
+  <div id="score">Điểm: 0</div>
+  <div id="turn">Lượt: Người chơi</div>
+  <div id="powerBar"><div id="powerFill"></div></div>
+</div>
+<canvas id="bida" width="800" height="400"></canvas>
 
 <script>
 const canvas = document.getElementById('bida');
 const ctx = canvas.getContext('2d');
 
-// 6 lỗ
+// Lỗ bàn
 const holes = [
   {x:0,y:0},{x:canvas.width/2,y:0},{x:canvas.width,y:0},
   {x:0,y:canvas.height},{x:canvas.width/2,y:canvas.height},{x:canvas.width,y:canvas.height}
 ];
 
-// Bi: 1 bi cái trắng + 3 bi mục tiêu
+// 8 bi mục tiêu + bi cái trắng
 let balls = [
-  {x:100, y:150, r:10, color:'white', vx:0, vy:0, isCue:true},
-  {x:300, y:100, r:10, color:'red', vx:0, vy:0},
-  {x:400, y:150, r:10, color:'yellow', vx:0, vy:0},
-  {x:300, y:200, r:10, color:'blue', vx:0, vy:0}
+  {x:100, y:200, r:12, color:'white', vx:0, vy:0, isCue:true, number:0},
+  {x:400, y:100, r:12, color:'red', vx:0, vy:0, number:1},
+  {x:450, y:150, r:12, color:'orange', vx:0, vy:0, number:2},
+  {x:500, y:200, r:12, color:'yellow', vx:0, vy:0, number:3},
+  {x:550, y:250, r:12, color:'green', vx:0, vy:0, number:4},
+  {x:600, y:150, r:12, color:'blue', vx:0, vy:0, number:5},
+  {x:650, y:200, r:12, color:'purple', vx:0, vy:0, number:6},
+  {x:700, y:150, r:12, color:'brown', vx:0, vy:0, number:7},
+  {x:750, y:200, r:12, color:'black', vx:0, vy:0, number:8}
 ];
 
 let score = 0;
-let turn = 1; // 1 hoặc 2
+let turn = "Người chơi";
+let currentNumber = 1;
 let mouseDown = false;
 let mouseStart = {x:0,y:0};
 
-function drawTable() {
+// Vẽ bàn
+function drawTable(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  // vẽ lỗ
+  // lỗ
   holes.forEach(h=>{
     ctx.beginPath();
     ctx.arc(h.x,h.y,15,0,2*Math.PI);
     ctx.fillStyle='black';
     ctx.fill();
   });
-  // vẽ bi
+  // bi
   balls.forEach(b=>{
     ctx.beginPath();
     ctx.arc(b.x,b.y,b.r,0,2*Math.PI);
@@ -58,39 +69,40 @@ function drawTable() {
   });
 }
 
-// Cập nhật vị trí bi + ma sát
-function updateBalls() {
+// Cập nhật bi + ma sát
+function updateBalls(){
   balls.forEach(b=>{
     b.x += b.vx;
     b.y += b.vy;
     b.vx *= 0.98;
     b.vy *= 0.98;
 
-    // bi rơi vào lỗ
+    // va bi bàn
+    if(b.x-b.r<0 || b.x+b.r>canvas.width) b.vx*=-1;
+    if(b.y-b.r<0 || b.y+b.r>canvas.height) b.vy*=-1;
+
+    // kiểm tra lỗ
     holes.forEach(h=>{
       const dx = b.x - h.x;
       const dy = b.y - h.y;
       if(Math.sqrt(dx*dx+dy*dy)<15){
         if(b.isCue){
-          // bi cái rơi lỗ → lỗi, đổi lượt
           resetCue();
           switchTurn();
+        } else if(b.number === currentNumber){
+          score +=1;
+          balls = balls.filter(bb=>bb!==b);
+          currentNumber +=1;
         } else {
-          // bi mục tiêu vào lỗ → cộng điểm
-          score += 1;
-          balls = balls.filter(bb=>bb!==b); // loại bi
+          switchTurn();
         }
       }
     });
-
-    // va bi bàn
-    if(b.x-b.r<0 || b.x+b.r>canvas.width) b.vx*=-1;
-    if(b.y-b.r<0 || b.y+b.r>canvas.height) b.vy*=-1;
   });
 }
 
 // Va chạm bi
-function detectCollision() {
+function detectCollision(){
   for(let i=0;i<balls.length;i++){
     for(let j=i+1;j<balls.length;j++){
       let b1 = balls[i], b2 = balls[j];
@@ -110,44 +122,74 @@ function detectCollision() {
   }
 }
 
-// Đặt lại bi cái
+// Reset bi cái
 function resetCue(){
   let cue = balls.find(b=>b.isCue);
   cue.x = 100;
-  cue.y = 150;
-  cue.vx = 0;
-  cue.vy = 0;
+  cue.y = 200;
+  cue.vx=0;
+  cue.vy=0;
 }
 
 // Đổi lượt
 function switchTurn(){
-  turn = turn===1?2:1;
-  document.getElementById('turn').innerText = "Lượt: Người chơi "+turn;
+  turn = turn==="Người chơi"?"AI":"Người chơi";
+  document.getElementById('turn').innerText = "Lượt: "+turn;
 }
 
-// Chuột đánh bi
+// Chuột kéo để đánh
 canvas.addEventListener('mousedown', e=>{
-  mouseDown = true;
-  mouseStart.x = e.offsetX;
-  mouseStart.y = e.offsetY;
+  mouseDown=true;
+  mouseStart.x=e.offsetX;
+  mouseStart.y=e.offsetY;
+});
+
+canvas.addEventListener('mousemove', e=>{
+  if(mouseDown){
+    let dx = e.offsetX - mouseStart.x;
+    let dy = e.offsetY - mouseStart.y;
+    let power = Math.min(100, Math.sqrt(dx*dx+dy*dy));
+    document.getElementById('powerFill').style.width = power + "%";
+  }
 });
 
 canvas.addEventListener('mouseup', e=>{
-  if(mouseDown){
-    mouseDown = false;
+  if(mouseDown && turn==="Người chơi"){
+    mouseDown=false;
     let cue = balls.find(b=>b.isCue);
     let dx = e.offsetX - mouseStart.x;
     let dy = e.offsetY - mouseStart.y;
     cue.vx = dx/5;
     cue.vy = dy/5;
+    document.getElementById('powerFill').style.width = 0;
   }
 });
 
+// AI đánh đơn giản
+function aiPlay(){
+  let cue = balls.find(b=>b.isCue);
+  let target = balls.find(b=>b.number===currentNumber);
+  if(!target) return;
+  let dx = target.x - cue.x + (Math.random()-0.5)*20; 
+  let dy = target.y - cue.y + (Math.random()-0.5)*20;
+  cue.vx = dx/15;
+  cue.vy = dy/15;
+}
+
+// Game loop
 function gameLoop(){
   updateBalls();
   detectCollision();
   drawTable();
   document.getElementById('score').innerText = "Điểm: "+score;
+
+  if(turn==="AI"){
+    let cue = balls.find(b=>b.isCue);
+    if(Math.abs(cue.vx)<0.1 && Math.abs(cue.vy)<0.1){
+      aiPlay();
+    }
+  }
+
   requestAnimationFrame(gameLoop);
 }
 
@@ -155,6 +197,7 @@ gameLoop();
 </script>
 </body>
 </html>
+
 
 
 
