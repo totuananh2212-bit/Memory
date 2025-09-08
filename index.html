@@ -1,195 +1,168 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Motor Jump Game V2</title>
-<style>
-body{margin:0;background:#87CEEB;overflow:hidden;}
-canvas{display:block;margin:0 auto;background:#4CAF50;}
-#score{position:absolute;top:10px;left:50%;transform:translateX(-50%);color:#fff;font-size:24px;font-family:sans-serif;}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Motor Jump Game</title>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; background: #87CEEB; }
+  </style>
 </head>
 <body>
-<div id="score">Điểm: 0</div>
-<canvas id="gameCanvas" width="800" height="400"></canvas>
-<script>
-const canvas=document.getElementById("gameCanvas");
-const ctx=canvas.getContext("2d");
-
-let score=0;
-let speed=5;
-let obstacles=[];
-let waterholes=[];
-let monsters=[];
-let gravity=0.6;
-let frame=0;
-
-// Người lái moto
-let motor={x:50,y:310,width:40,height:40,vy:0,jumping:false};
-
-// Vẽ người lái moto (hình chữ nhật + màu)
-function drawMotor(){
-    // thân xe
-    ctx.fillStyle="#FF0000";
-    ctx.fillRect(motor.x,motor.y+10,motor.width,15);
-    // bánh trước
-    ctx.fillStyle="#000";
-    ctx.beginPath();
-    ctx.arc(motor.x+motor.width-5,motor.y+25,7,0,Math.PI*2);
-    ctx.fill();
-    // bánh sau
-    ctx.beginPath();
-    ctx.arc(motor.x+5,motor.y+25,7,0,Math.PI*2);
-    ctx.fill();
-    // người lái
-    ctx.fillStyle="#FFD700";
-    ctx.fillRect(motor.x+10,motor.y-10,15,20);
-}
-
-// Vẽ đường lộ với vạch giữa
-function drawGround(){
-    ctx.fillStyle="#654321";
-    ctx.fillRect(0,350,canvas.width,50); // đất
-    // đường lộ
-    ctx.fillStyle="#a0a0a0";
-    ctx.fillRect(0,360,canvas.width,10);
-    // vạch kẻ giữa
-    ctx.strokeStyle="#fff";
-    ctx.lineWidth=2;
-    for(let i=0;i<canvas.width;i+=40){
-        ctx.beginPath();
-        ctx.moveTo(i,365);
-        ctx.lineTo(i+20,365);
-        ctx.stroke();
-    }
-}
-
-// Vẽ đá
-function drawObstacles(){
-    obstacles.forEach(o=>{
-        ctx.fillStyle="gray";
-        ctx.beginPath();
-        ctx.moveTo(o.x,o.y+o.height);
-        ctx.lineTo(o.x+o.width/2,o.y);
-        ctx.lineTo(o.x+o.width,o.y+o.height);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle="#555";
-        ctx.stroke();
-    });
-}
-
-// Vẽ hố nước
-function drawWaterholes(){
-    ctx.fillStyle="blue";
-    waterholes.forEach(w=>{
-        ctx.fillRect(w.x,w.y,w.width,w.height);
-    });
-}
-
-// Vẽ quái vật
-function drawMonsters(){
-    monsters.forEach(m=>{
-        ctx.fillStyle="purple";
-        ctx.fillRect(m.x,m.y,m.width,m.height);
-    });
-}
-
-// Tạo vật thể
-function createObstacle(){
-    obstacles.push({x:canvas.width,y:310,width:30,height:40});
-}
-function createWaterhole(){
-    waterholes.push({x:canvas.width,y:350,width:50,height:50});
-}
-function createMonster(){
-    monsters.push({x:canvas.width,y:300,width:40,height:50});
-}
-
-// Cập nhật vật thể
-function updateObstacles(){obstacles.forEach(o=>o.x-=speed);obstacles=obstacles.filter(o=>o.x+o.width>0);}
-function updateWaterholes(){waterholes.forEach(w=>w.x-=speed);waterholes=waterholes.filter(w=>w.x+w.width>0);}
-function updateMonsters(){monsters.forEach(m=>m.x-=speed);monsters=monsters.filter(m=>m.x+m.width>0);}
-
-// Va chạm
-function checkCollision(){
-    let hit=false;
-    obstacles.forEach(o=>{
-        if(motor.x<motor.x+motor.width && motor.x+motor.width>o.x &&
-           motor.y<motor.y+motor.height && motor.y+motor.height>o.y){
-            hit=true;
-        }
-    });
-    waterholes.forEach(w=>{
-        if(motor.x<motor.x+motor.width && motor.x+motor.width>w.x &&
-           motor.y<motor.y+motor.height && motor.y+motor.height>w.y){
-            hit=true;
-        }
-    });
-    monsters.forEach(m=>{
-        if(motor.x<motor.x+motor.width && motor.x+motor.width>m.x &&
-           motor.y<motor.y+motor.height && motor.y+motor.height>m.y){
-            hit=true;
-        }
-    });
-    return hit;
-}
-
-// Nhảy
-document.addEventListener("keydown",e=>{
-    if(e.code==="Space" && !motor.jumping){
-        motor.vy=-12;
-        motor.jumping=true;
-    }
-});
-
-// Game loop
-function gameLoop(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    drawGround();
-    drawMotor();
-    drawObstacles();
-    drawWaterholes();
-    drawMonsters();
-
-    // gravity
-    motor.vy+=gravity;
-    motor.y+=motor.vy;
-    if(motor.y>310){motor.y=310; motor.vy=0; motor.jumping=false;}
-
-    // tạo vật thể
-    if(frame%150===0) createObstacle();
-    if(frame%500===0) createWaterhole();
-    if(frame%700===0) createMonster();
-
-    // cập nhật vật thể
-    updateObstacles();
-    updateWaterholes();
-    updateMonsters();
-
-    // tính điểm
-    score+=0.1;
-    document.getElementById("score").innerText="Điểm: "+Math.floor(score);
-
-    // tăng tốc / thêm vật thể khi đạt điểm
-    if(Math.floor(score)%100===0 && Math.floor(score)!==0){
-        speed+=0.5;
-    }
-
-    // check va chạm
-    if(checkCollision()){
-        alert("Game Over! Điểm: "+Math.floor(score));
-        score=0; speed=5; obstacles=[]; waterholes=[]; monsters=[]; motor.y=310; motor.vy=0; motor.jumping=false;
-    }
-
-    frame++;
-    requestAnimationFrame(gameLoop);
-}
-
-gameLoop();
-</script>
+  <canvas id="gameCanvas"></canvas>
+  <script src="script.js"></script>
 </body>
 </html>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = 800;
+canvas.height = 400;
+
+const images = {
+  motorcycle: new Image(),
+  rock: new Image(),
+  waterhole: new Image(),
+  monster: new Image(),
+};
+
+images.motorcycle.src = 'images/motorcycle.png';
+images.rock.src = 'images/rock.png';
+images.waterhole.src = 'images/waterhole.png';
+images.monster.src = 'images/monster.png';
+
+const motorcycle = {
+  x: 100,
+  y: canvas.height - 100,
+  width: 80,
+  height: 40,
+  speed: 5,
+  jumpHeight: 0,
+  isJumping: false,
+};
+
+const obstacles = [];
+const monsters = [];
+let score = 0;
+let gameSpeed = 3;
+let isGameOver = false;
+
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && !motorcycle.isJumping) {
+    motorcycle.isJumping = true;
+    motorcycle.jumpHeight = 0;
+  }
+});
+
+function createObstacle() {
+  const type = Math.random() < 0.5 ? 'rock' : 'waterhole';
+  const x = canvas.width;
+  const y = type === 'rock' ? canvas.height - 50 : canvas.height - 30;
+  const width = type === 'rock' ? 50 : 60;
+  const height = type === 'rock' ? 50 : 30;
+  obstacles.push({ type, x, y, width, height });
+}
+
+function createMonster() {
+  const x = canvas.width;
+  const y = Math.random() * (canvas.height - 50);
+  monsters.push({ x, y, width: 50, height: 50 });
+}
+
+function update() {
+  if (isGameOver) return;
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Update motorcycle position
+  if (motorcycle.isJumping) {
+    motorcycle.jumpHeight += 2;
+    motorcycle.y -= 2;
+    if (motorcycle.jumpHeight > 50) {
+      motorcycle.isJumping = false;
+    }
+  } else if (motorcycle.y < canvas.height - 100) {
+    motorcycle.y += 2;
+  }
+
+  // Draw motorcycle
+  ctx.drawImage(images.motorcycle, motorcycle.x, motorcycle.y, motorcycle.width, motorcycle.height);
+
+  // Update and draw obstacles
+  obstacles.forEach((obstacle, index) => {
+    obstacle.x -= gameSpeed;
+    ctx.drawImage(images[obstacle.type], obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+    if (obstacle.x + obstacle.width < 0) {
+      obstacles.splice(index, 1);
+      score++;
+      if (score % 100 === 0) {
+        gameSpeed++;
+      }
+    }
+  });
+
+  // Update and draw monsters
+  monsters.forEach((monster, index) => {
+    monster.x -= gameSpeed;
+    ctx.drawImage(images.monster, monster.x, monster.y, monster.width, monster.height);
+    if (monster.x + monster.width < 0) {
+      monsters.splice(index, 1);
+    }
+  });
+
+  // Check for collisions
+  obstacles.forEach((obstacle) => {
+    if (
+      motorcycle.x + motorcycle.width > obstacle.x &&
+      motorcycle.x < obstacle.x + obstacle.width &&
+      motorcycle.y + motorcycle.height > obstacle.y &&
+      motorcycle.y < obstacle.y + obstacle.height
+    ) {
+      isGameOver = true;
+    }
+  });
+
+  monsters.forEach((monster) => {
+    if (
+      motorcycle.x + motorcycle.width > monster.x &&
+      motorcycle.x < monster.x + monster.width &&
+      motorcycle.y + motorcycle.height > monster.y &&
+      motorcycle.y < monster.y + monster.height
+    ) {
+      isGameOver = true;
+    }
+  });
+
+  // Draw score
+  ctx.fillStyle = 'white';
+  ctx.font = '20px Arial';
+  ctx.fillText('Điểm: ' + score, 10, 30);
+
+  if (isGameOver) {
+    ctx.fillStyle = 'black';
+    ctx.font = '30px Arial';
+    ctx.fillText('Game Over!', canvas.width / 2 - 80, canvas.height / 2);
+  }
+
+  requestAnimationFrame(update);
+}
+
+function startGame() {
+  setInterval(() => {
+    if (!isGameOver) {
+      createObstacle();
+      if (Math.random() < 0.1) {
+        createMonster();
+      }
+    }
+  }, 2000);
+
+  update();
+}
+
+startGame();
+
 
 
 
