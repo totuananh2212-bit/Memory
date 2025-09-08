@@ -48,6 +48,25 @@ let currentNumber = 1;
 let mouseDown = false;
 let mouseStart = {x:0,y:0};
 
+// Vẽ bi với viền và đổ bóng
+function drawBallWithEdge(b){
+    ctx.save();
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetX = 2;
+    ctx.shadowOffsetY = 2;
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+    ctx.fillStyle = b.color;
+    ctx.fill();
+    ctx.strokeStyle = 'black';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    ctx.restore();
+}
+
 // Vẽ bàn
 function drawTable(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -59,14 +78,7 @@ function drawTable(){
     ctx.fill();
   });
   // bi
-  balls.forEach(b=>{
-    ctx.beginPath();
-    ctx.arc(b.x,b.y,b.r,0,2*Math.PI);
-    ctx.fillStyle=b.color;
-    ctx.fill();
-    ctx.strokeStyle='black';
-    ctx.stroke();
-  });
+  balls.forEach(b=> drawBallWithEdge(b));
 }
 
 // Cập nhật bi + ma sát
@@ -101,7 +113,7 @@ function updateBalls(){
   });
 }
 
-// Va chạm bi
+// Va chạm bi với xử lý đẩy ra khỏi nhau
 function detectCollision(){
   for(let i=0;i<balls.length;i++){
     for(let j=i+1;j<balls.length;j++){
@@ -109,7 +121,15 @@ function detectCollision(){
       let dx = b2.x - b1.x;
       let dy = b2.y - b1.y;
       let dist = Math.sqrt(dx*dx+dy*dy);
-      if(dist < b1.r+b2.r){
+      if(dist < b1.r + b2.r){
+        let overlap = (b1.r + b2.r) - dist;
+        let nx = dx/dist;
+        let ny = dy/dist;
+        b1.x -= nx*overlap/2;
+        b1.y -= ny*overlap/2;
+        b2.x += nx*overlap/2;
+        b2.y += ny*overlap/2;
+
         let angle = Math.atan2(dy,dx);
         let speed1 = Math.sqrt(b1.vx*b1.vx+b1.vy*b1.vy);
         let speed2 = Math.sqrt(b2.vx*b2.vx+b2.vy*b2.vy);
@@ -197,6 +217,7 @@ gameLoop();
 </script>
 </body>
 </html>
+
 
 
 
