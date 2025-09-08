@@ -1,81 +1,136 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Dino Jump</title>
-  <style>
-    body { margin: 0; overflow: hidden; background: #f7f7f7; }
-    canvas { display: block; margin: auto; background: white; border: 2px solid #333; }
-  </style>
+<meta charset="UTF-8">
+<title>Bida 6 lỗ</title>
+<style>
+  body { display:flex; justify-content:center; align-items:center; height:100vh; background:#2b2b2b; }
+  canvas { background:#006400; border:3px solid #fff; }
+  #score { position:absolute; top:20px; color:#fff; font-size:24px; }
+</style>
 </head>
 <body>
-<canvas id="game" width="800" height="200"></canvas>
+<div id="score">Điểm: 0</div>
+<canvas id="bida" width="600" height="300"></canvas>
+
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+const canvas = document.getElementById('bida');
+const ctx = canvas.getContext('2d');
 
-let dino = { x: 50, y: 150, width: 40, height: 40, dy: 0, jumping: false };
-let obstacles = [];
+const holes = [
+  {x:0,y:0},{x:canvas.width/2,y:0},{x:canvas.width,y:0},
+  {x:0,y:canvas.height},{x:canvas.width/2,y:canvas.height},{x:canvas.width,y:canvas.height}
+];
+
+let balls = [
+  {x:300, y:150, r:10, color:'white', vx:0, vy:0, isCue:true},
+  {x:200, y:150, r:10, color:'red', vx:0, vy:0},
+  {x:400, y:150, r:10, color:'yellow', vx:0, vy:0}
+];
+
 let score = 0;
+let mouseDown = false;
+let mouseStart = {x:0,y:0};
 
-function drawDino() {
-  ctx.fillStyle = "green";
-  ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
-}
-
-function drawObstacles() {
-  ctx.fillStyle = "red";
-  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.width, o.height));
-}
-
-function update() {
+function drawTable() {
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawDino();
-  drawObstacles();
-
-  if (dino.jumping) {
-    dino.dy += 1.5;
-    dino.y += dino.dy;
-    if (dino.y >= 150) {
-      dino.y = 150;
-      dino.jumping = false;
-    }
-  }
-
-  obstacles.forEach(o => {
-    o.x -= 5;
-    if (o.x + o.width < 0) {
-      obstacles.shift();
-      score++;
-    }
-    if (dino.x < o.x + o.width && dino.x + dino.width > o.x && dino.y < o.y + o.height && dino.y + dino.height > o.y) {
-      alert("Game Over! Score: " + score);
-      document.location.reload();
-    }
+  // vẽ lỗ
+  holes.forEach(h=> {
+    ctx.beginPath();
+    ctx.arc(h.x,h.y,15,0,2*Math.PI);
+    ctx.fillStyle='black';
+    ctx.fill();
   });
-
-  if (Math.random() < 0.02) {
-    obstacles.push({ x: canvas.width, y: 160, width: 20, height: 40 });
-  }
-
-  ctx.fillStyle = "black";
-  ctx.font = "20px Arial";
-  ctx.fillText("Score: " + score, 10, 20);
-
-  requestAnimationFrame(update);
+  // vẽ bi
+  balls.forEach(b=>{
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.r,0,2*Math.PI);
+    ctx.fillStyle=b.color;
+    ctx.fill();
+    ctx.strokeStyle='black';
+    ctx.stroke();
+  });
 }
 
-document.addEventListener("keydown", e => {
-  if (e.code === "Space" && !dino.jumping) {
-    dino.jumping = true;
-    dino.dy = -20;
+function updateBalls() {
+  balls.forEach(b=>{
+    b.x += b.vx;
+    b.y += b.vy;
+    b.vx *= 0.98; // ma sát
+    b.vy *= 0.98;
+
+    // kiểm tra lỗ
+    holes.forEach(h=>{
+      const dx = b.x - h.x;
+      const dy = b.y - h.y;
+      if(Math.sqrt(dx*dx+dy*dy) < 15){
+        if(!b.isCue) {
+          score += 1;
+          document.getElementById('score').innerText = "Điểm: "+score;
+        }
+        b.x = -100; // tạm ẩn bi
+        b.y = -100;
+        b.vx = 0;
+        b.vy = 0;
+      }
+    });
+
+    // va chạm bi bàn
+    if(b.x-b.r<0 || b.x+b.r>canvas.width) b.vx*=-1;
+    if(b.y-b.r<0 || b.y+b.r>canvas.height) b.vy*=-1;
+  });
+}
+
+function detectCollision() {
+  for(let i=0;i<balls.length;i++){
+    for(let j=i+1;j<balls.length;j++){
+      let b1 = balls[i], b2 = balls[j];
+      let dx = b2.x - b1.x;
+      let dy = b2.y - b1.y;
+      let dist = Math.sqrt(dx*dx+dy*dy);
+      if(dist < b1.r+b2.r){
+        // đổi vận tốc đơn giản
+        let angle = Math.atan2(dy,dx);
+        let speed1 = Math.sqrt(b1.vx*b1.vx + b1.vy*b1.vy);
+        let speed2 = Math.sqrt(b2.vx*b2.vx + b2.vy*b2.vy);
+        b1.vx = speed2 * Math.cos(angle);
+        b1.vy = speed2 * Math.sin(angle);
+        b2.vx = speed1 * Math.cos(angle+Math.PI);
+        b2.vy = speed1 * Math.sin(angle+Math.PI);
+      }
+    }
+  }
+}
+
+canvas.addEventListener('mousedown', e=>{
+  mouseDown = true;
+  mouseStart.x = e.offsetX;
+  mouseStart.y = e.offsetY;
+});
+
+canvas.addEventListener('mouseup', e=>{
+  if(mouseDown){
+    mouseDown = false;
+    let cue = balls.find(b=>b.isCue);
+    let dx = e.offsetX - mouseStart.x;
+    let dy = e.offsetY - mouseStart.y;
+    cue.vx = dx/5;
+    cue.vy = dy/5;
   }
 });
 
-update();
+function gameLoop() {
+  updateBalls();
+  detectCollision();
+  drawTable();
+  requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
 </script>
 </body>
 </html>
+
 
 
 
