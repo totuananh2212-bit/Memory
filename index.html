@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Motor Jump Game</title>
+<title>Motor Jump Game V2</title>
 <style>
 body{margin:0;background:#87CEEB;overflow:hidden;}
 canvas{display:block;margin:0 auto;background:#4CAF50;}
@@ -22,35 +22,80 @@ let obstacles=[];
 let waterholes=[];
 let monsters=[];
 let gravity=0.6;
+let frame=0;
 
-let motor={x:50,y:300,width:40,height:40,vy:0,jumping:false,color:"red"};
+// Người lái moto
+let motor={x:50,y:310,width:40,height:40,vy:0,jumping:false};
 
+// Vẽ người lái moto (hình chữ nhật + màu)
 function drawMotor(){
-    ctx.fillStyle=motor.color;
-    ctx.fillRect(motor.x,motor.y,motor.width,motor.height);
+    // thân xe
+    ctx.fillStyle="#FF0000";
+    ctx.fillRect(motor.x,motor.y+10,motor.width,15);
+    // bánh trước
+    ctx.fillStyle="#000";
+    ctx.beginPath();
+    ctx.arc(motor.x+motor.width-5,motor.y+25,7,0,Math.PI*2);
+    ctx.fill();
+    // bánh sau
+    ctx.beginPath();
+    ctx.arc(motor.x+5,motor.y+25,7,0,Math.PI*2);
+    ctx.fill();
+    // người lái
+    ctx.fillStyle="#FFD700";
+    ctx.fillRect(motor.x+10,motor.y-10,15,20);
 }
 
+// Vẽ đường lộ với vạch giữa
 function drawGround(){
     ctx.fillStyle="#654321";
     ctx.fillRect(0,350,canvas.width,50); // đất
+    // đường lộ
     ctx.fillStyle="#a0a0a0";
-    ctx.fillRect(0,360,canvas.width,10); // đường lộ
+    ctx.fillRect(0,360,canvas.width,10);
+    // vạch kẻ giữa
+    ctx.strokeStyle="#fff";
+    ctx.lineWidth=2;
+    for(let i=0;i<canvas.width;i+=40){
+        ctx.beginPath();
+        ctx.moveTo(i,365);
+        ctx.lineTo(i+20,365);
+        ctx.stroke();
+    }
 }
 
+// Vẽ đá
 function drawObstacles(){
-    ctx.fillStyle="gray";
-    obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.width,o.height));
+    obstacles.forEach(o=>{
+        ctx.fillStyle="gray";
+        ctx.beginPath();
+        ctx.moveTo(o.x,o.y+o.height);
+        ctx.lineTo(o.x+o.width/2,o.y);
+        ctx.lineTo(o.x+o.width,o.y+o.height);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle="#555";
+        ctx.stroke();
+    });
 }
+
+// Vẽ hố nước
 function drawWaterholes(){
     ctx.fillStyle="blue";
-    waterholes.forEach(w=>ctx.fillRect(w.x,w.y,w.width,w.height));
-}
-function drawMonsters(){
-    ctx.fillStyle="purple";
-    monsters.forEach(m=>ctx.fillRect(m.x,m.y,m.width,m.height));
+    waterholes.forEach(w=>{
+        ctx.fillRect(w.x,w.y,w.width,w.height);
+    });
 }
 
-// tạo obstacle
+// Vẽ quái vật
+function drawMonsters(){
+    monsters.forEach(m=>{
+        ctx.fillStyle="purple";
+        ctx.fillRect(m.x,m.y,m.width,m.height);
+    });
+}
+
+// Tạo vật thể
 function createObstacle(){
     obstacles.push({x:canvas.width,y:310,width:30,height:40});
 }
@@ -61,21 +106,12 @@ function createMonster(){
     monsters.push({x:canvas.width,y:300,width:40,height:50});
 }
 
-// cập nhật vật thể
-function updateObstacles(){
-    obstacles.forEach(o=>o.x-=speed);
-    obstacles=obstacles.filter(o=>o.x+o.width>0);
-}
-function updateWaterholes(){
-    waterholes.forEach(w=>w.x-=speed);
-    waterholes=waterholes.filter(w=>w.x+w.width>0);
-}
-function updateMonsters(){
-    monsters.forEach(m=>m.x-=speed);
-    monsters=monsters.filter(m=>m.x+m.width>0);
-}
+// Cập nhật vật thể
+function updateObstacles(){obstacles.forEach(o=>o.x-=speed);obstacles=obstacles.filter(o=>o.x+o.width>0);}
+function updateWaterholes(){waterholes.forEach(w=>w.x-=speed);waterholes=waterholes.filter(w=>w.x+w.width>0);}
+function updateMonsters(){monsters.forEach(m=>m.x-=speed);monsters=monsters.filter(m=>m.x+m.width>0);}
 
-// va chạm
+// Va chạm
 function checkCollision(){
     let hit=false;
     obstacles.forEach(o=>{
@@ -99,7 +135,7 @@ function checkCollision(){
     return hit;
 }
 
-// nhảy
+// Nhảy
 document.addEventListener("keydown",e=>{
     if(e.code==="Space" && !motor.jumping){
         motor.vy=-12;
@@ -107,8 +143,7 @@ document.addEventListener("keydown",e=>{
     }
 });
 
-// game loop
-let frame=0;
+// Game loop
 function gameLoop(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     drawGround();
@@ -136,7 +171,7 @@ function gameLoop(){
     score+=0.1;
     document.getElementById("score").innerText="Điểm: "+Math.floor(score);
 
-    // tăng tốc hoặc thêm vật thể khi đạt điểm
+    // tăng tốc / thêm vật thể khi đạt điểm
     if(Math.floor(score)%100===0 && Math.floor(score)!==0){
         speed+=0.5;
     }
@@ -155,6 +190,7 @@ gameLoop();
 </script>
 </body>
 </html>
+
 
 
 
