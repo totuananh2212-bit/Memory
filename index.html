@@ -32,11 +32,9 @@
       margin: 20px 0;
       border-radius: 8px;
       padding: 10px;
-      border: 1px solid #fff;
+      border: none;
       outline: none;
       font-size: 14px;
-      background: #111;
-      color: #fff;
     }
     button {
       background-color: #222;
@@ -75,9 +73,9 @@
       const regex = /\b0\d{9,10}\b/g;
       let numbers = text.match(regex) || [];
       numbers = [...new Set(numbers)].filter(n => !/^0+$/.test(n));
-      document.getElementById('result').textContent =
-        numbers.length ? numbers.join('\n') : 'Không tìm thấy số điện thoại.';
+      document.getElementById('result').textContent = numbers.length ? numbers.join('\n') : 'Không tìm thấy số điện thoại.';
     }
   </script>
 </body>
 </html>
+
