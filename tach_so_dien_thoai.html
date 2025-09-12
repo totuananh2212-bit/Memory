@@ -6,7 +6,7 @@
   <title>Tách số điện thoại</title>
   <style>
     body {
-      background-color: #002b5b;
+      background-color: #000;
       font-family: Arial, sans-serif;
       color: #fff;
       margin: 0;
@@ -16,8 +16,14 @@
       align-items: center;
     }
     h1 {
-      margin-top: 20px;
-      font-size: 24px;
+      margin-top: 10px;
+      font-size: 26px;
+      color: #fff;
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 18px;
+      color: #fff;
     }
     textarea {
       width: 90%;
@@ -31,22 +37,22 @@
       font-size: 14px;
     }
     button {
-      background-color: #004aad;
+      background-color: #222;
       color: white;
-      border: none;
+      border: 1px solid #fff;
       border-radius: 6px;
       padding: 10px 16px;
       cursor: pointer;
       font-weight: bold;
     }
     button:hover {
-      background-color: #0066ff;
+      background-color: #444;
     }
     #result {
       margin-top: 20px;
       width: 90%;
       max-width: 600px;
-      background: #03396c;
+      background: #111;
       padding: 10px;
       border-radius: 8px;
       min-height: 100px;
@@ -55,7 +61,8 @@
   </style>
 </head>
 <body>
-  <h1>Tách số điện thoại</h1>
+  <h1>Tô Anh</h1>
+  <h2>Tách số điện thoại</h2>
   <textarea id="inputText" placeholder="Dán văn bản chứa số điện thoại vào đây..."></textarea>
   <button onclick="tachSo()">Tách số</button>
   <div id="result"></div>
@@ -71,3 +78,4 @@
   </script>
 </body>
 </html>
+
