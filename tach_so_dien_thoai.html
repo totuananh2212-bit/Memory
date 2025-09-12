@@ -3,205 +3,71 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tách số điện thoại — Wol</title>
+  <title>Tách số điện thoại</title>
   <style>
-    :root{
-      --bg:#052a5b; /* dark blue background */
-      --panel:#073a78;
-      --accent:#0b62d4;
-      --muted:#cfe6ff;
-      --card:#0b3d91;
-      --danger:#ff4d4f;
-      --glass: rgba(255,255,255,0.04);
-      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    body {
+      background-color: #002b5b;
+      font-family: Arial, sans-serif;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#021833);color:var(--muted)}
-    .wrap{max-width:960px;margin:28px auto;padding:20px}
-    header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
-    header h1{font-size:20px;margin:0;color:#fff}
-    .grid{display:grid;grid-template-columns:1fr 360px;gap:16px}
-    .card{background:var(--card);padding:14px;border-radius:12px;box-shadow:0 6px 18px rgba(3,8,23,0.6)}
-    textarea{width:100%;min-height:220px;padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:var(--glass);color:var(--muted);resize:vertical;font-size:14px}
-    label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
-    .controls{display:flex;gap:8px;margin-top:10px}
-    button{background:var(--accent);border:0;padding:10px 12px;border-radius:8px;color:white;cursor:pointer;font-weight:600}
-    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
-    .small{padding:8px 10px;font-size:13px}
-    .results{max-height:420px;overflow:auto;padding:12px;border-radius:8px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent)}
-    .phone{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-radius:6px;margin-bottom:8px;background:rgba(0,0,0,0.08)}
-    .meta{font-size:12px;color:rgba(255,255,255,0.75)}
-    .actions{display:flex;gap:8px;margin-top:10px}
-    .hint{font-size:13px;color:rgba(255,255,255,0.6);margin-top:8px}
-    footer{margin-top:12px;font-size:12px;color:rgba(255,255,255,0.45)}
-    @media(max-width:880px){.grid{grid-template-columns:1fr}}
+    h1 {
+      margin-top: 20px;
+      font-size: 24px;
+    }
+    textarea {
+      width: 90%;
+      max-width: 600px;
+      height: 200px;
+      margin: 20px 0;
+      border-radius: 8px;
+      padding: 10px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+    button {
+      background-color: #004aad;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #0066ff;
+    }
+    #result {
+      margin-top: 20px;
+      width: 90%;
+      max-width: 600px;
+      background: #03396c;
+      padding: 10px;
+      border-radius: 8px;
+      min-height: 100px;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='36' height='36'><rect rx='8' width='36' height='36' fill='%230b62d4'/><text x='50%' y='57%' font-size='18' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial'>W</text></svg>" alt="logo" style="width:36px;height:36px;border-radius:8px;"/>
-      <h1>Tách số điện thoại — giao diện xanh đậm</h1>
-    </header>
-
-    <div class="grid">
-      <section class="card">
-        <label for="inputText">Dán văn bản chứa số điện thoại:</label>
-        <textarea id="inputText" placeholder="Dán hoặc nhập văn bản ở đây... (hỗ trợ +84, 84x, 0xxxxxxxxx, 0xxxxxxxxxx)"></textarea>
-
-        <div class="controls">
-          <button id="extractBtn">Tách số</button>
-          <button id="clearBtn" class="ghost small">Xóa</button>
-          <button id="pasteBtn" class="ghost small">Dán từ clipboard</button>
-        </div>
-
-        <div class="hint">Regex: nhận các dãy số dài 9–12 chữ số, chuẩn hoá +84/84 → 0, loại bỏ 000... và trùng lặp.</div>
-
-        <div class="actions">
-          <button id="copyBtn" class="small ghost">Sao chép kết quả</button>
-          <button id="downloadBtn" class="small ghost">Tải CSV</button>
-        </div>
-      </section>
-
-      <aside class="card">
-        <label>Kết quả (chỉ số điện thoại):</label>
-        <div id="result" class="results" aria-live="polite"></div>
-
-        <div style="margin-top:12px;display:flex;gap:8px;justify-content:space-between;align-items:center">
-          <div class="meta" id="count">0 số</div>
-          <div style="display:flex;gap:8px">
-            <button id="copyAll" class="small">Sao chép tất cả</button>
-            <button id="clearRes" class="small ghost">Xóa</button>
-          </div>
-        </div>
-      </aside>
-    </div>
-
-    <footer>Nhanh — chính xác. Cần điều chỉnh quy tắc lọc? Tôi chỉnh ngay.</footer>
-  </div>
+  <h1>Tách số điện thoại</h1>
+  <textarea id="inputText" placeholder="Dán văn bản chứa số điện thoại vào đây..."></textarea>
+  <button onclick="tachSo()">Tách số</button>
+  <div id="result"></div>
 
   <script>
-    // Hàm chuẩn hoá 1 chuỗi số
-    function normalizeNumber(raw) {
-      // loại bỏ mọi ký tự không phải số
-      let digits = raw.replace(/\D+/g, '');
-      if (!digits) return null;
-
-      // loại kasus +84 hoặc 84... => đổi thành 0...
-      if (digits.startsWith('84') && digits.length === 11) {
-        digits = '0' + digits.slice(2);
-      }
-      // nếu có leading 0 và 10 hoặc 11 ký tự -> chấp nhận
-      if (digits.startsWith('0') && (digits.length === 10 || digits.length === 11)) {
-        // loại bỏ chuỗi toàn số 0
-        if (/^0+$/.test(digits)) return null;
-        return digits;
-      }
-
-      // Một số trường hợp: nếu có 9 chữ số (không hợp lệ với VN) -> bỏ
-      // Nếu có 10-11 chữ số và không bắt đầu bằng 0 nhưng dài 10 (có thể thiếu 0) -> thử thêm 0
-      if ((digits.length === 9 || digits.length === 10) && !digits.startsWith('0')) {
-        const guess = '0' + digits.slice(-9);
-        if (guess.length === 10) return guess;
-      }
-
-      return null;
+    function tachSo() {
+      const text = document.getElementById('inputText').value;
+      const regex = /\b0\d{9,10}\b/g;
+      let numbers = text.match(regex) || [];
+      numbers = [...new Set(numbers)].filter(n => !/^0+$/.test(n));
+      document.getElementById('result').textContent = numbers.length ? numbers.join('\n') : 'Không tìm thấy số điện thoại.';
     }
-
-    function extractPhones(text) {
-      if (!text) return [];
-      // bắt tất cả dãy số liên tiếp dài 9..12
-      const rawMatches = text.match(/\d{9,12}/g) || [];
-      const set = new Set();
-      for (const m of rawMatches) {
-        const n = normalizeNumber(m);
-        if (n) set.add(n);
-      }
-      return Array.from(set).sort();
-    }
-
-    // UI
-    const input = document.getElementById('inputText');
-    const extractBtn = document.getElementById('extractBtn');
-    const resultBox = document.getElementById('result');
-    const countEl = document.getElementById('count');
-    const copyBtn = document.getElementById('copyBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const clearBtn = document.getElementById('clearBtn');
-    const pasteBtn = document.getElementById('pasteBtn');
-    const copyAll = document.getElementById('copyAll');
-    const clearRes = document.getElementById('clearRes');
-
-    function renderList(list) {
-      resultBox.innerHTML = '';
-      if (!list.length) {
-        resultBox.innerHTML = '<div class="meta">Không tìm thấy số nào.</div>';
-        countEl.textContent = '0 số';
-        return;
-      }
-      for (const p of list) {
-        const el = document.createElement('div');
-        el.className = 'phone';
-        el.innerHTML = `<div>${p}</div><div style=\"display:flex;gap:8px\"><button class=\"small\" data-copy=\"${p}\">Sao chép</button><button class=\"small ghost\" data-call=\"${p}\">Gọi</button></div>`;
-        resultBox.appendChild(el);
-      }
-      countEl.textContent = list.length + ' số';
-    }
-
-    extractBtn.addEventListener('click', () => {
-      const out = extractPhones(input.value);
-      renderList(out);
-    });
-
-    resultBox.addEventListener('click', (e) => {
-      const cp = e.target.getAttribute('data-copy');
-      const call = e.target.getAttribute('data-call');
-      if (cp) {
-        navigator.clipboard.writeText(cp).then(()=>alert('Đã sao chép: ' + cp));
-      }
-      if (call) {
-        // mở giao diện gọi trên thiết bị hỗ trợ
-        window.location.href = 'tel:' + call;
-      }
-    });
-
-    copyAll.addEventListener('click', async () => {
-      const phones = Array.from(resultBox.querySelectorAll('.phone > div:first-child')).map(d => d.textContent.trim());
-      if (!phones.length) return alert('Chưa có số để sao chép');
-      await navigator.clipboard.writeText(phones.join('\n'));
-      alert('Đã sao chép ' + phones.length + ' số');
-    });
-
-    copyBtn.addEventListener('click', () => copyAll.click());
-
-    downloadBtn.addEventListener('click', () => {
-      const phones = Array.from(resultBox.querySelectorAll('.phone > div:first-child')).map(d => d.textContent.trim());
-      if (!phones.length) return alert('Chưa có số để tải');
-      const csv = phones.map(p => '"' + p + '"').join('\n');
-      const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'so_dien_thoai.csv';
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    });
-
-    clearBtn.addEventListener('click', () => input.value = '');
-    clearRes.addEventListener('click', () => { resultBox.innerHTML = ''; countEl.textContent='0 số'; });
-
-    pasteBtn.addEventListener('click', async () => {
-      try {
-        const t = await navigator.clipboard.readText();
-        input.value = (input.value ? input.value + '\n' : '') + t;
-      } catch (err) {
-        alert('Không thể đọc clipboard. Hãy dán thủ công.');
-      }
-    });
-
-    // hỗ trợ dán tự động: nếu có nội dung ban đầu thì tách luôn
-    document.addEventListener('DOMContentLoaded', () => {
-      if (input.value.trim()) extractBtn.click();
-    });
   </script>
 </body>
 </html>
