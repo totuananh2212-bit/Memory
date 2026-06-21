@@ -2,241 +2,299 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KHO LƯU TRỮ</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cyber Falcon Flappy</title>
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Consolas, monospace;
+*{margin:0;padding:0;box-sizing:border-box;}
+body{overflow:hidden;background:#020617;font-family:Arial;}
+canvas{display:block;width:100vw;height:100vh;}
+
+#ui{
+    position:absolute;
+    top:15px;left:15px;
+    color:#00ffff;
+    font-weight:bold;
+    text-shadow:0 0 10px #00ffff;
+    font-size:20px;
 }
 
-body{
-    background:#050b15;
-    overflow:hidden;
-    color:#00ff99;
-}
-
-/* Background cyber */
-#matrix{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    z-index:-1;
-}
-
-/* Container */
-.container{
-    position:relative;
-    width:90%;
-    max-width:900px;
-    margin:50px auto;
-    background:rgba(0,0,0,0.75);
-    border:2px solid #00ff99;
-    box-shadow:0 0 20px #00ff99;
-    padding:30px;
-    border-radius:15px;
-    backdrop-filter:blur(8px);
+#start{
+    position:absolute;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%);
+    text-align:center;
+    color:white;
+    text-shadow:0 0 15px cyan;
 }
 
 h1{
-    text-align:center;
-    font-size:45px;
-    margin-bottom:20px;
-    color:#00ff99;
-    text-shadow:0 0 15px #00ff99;
-}
-
-.upload-box{
-    border:2px dashed #00ff99;
-    padding:30px;
-    text-align:center;
-    border-radius:10px;
-    margin-bottom:20px;
-}
-
-input[type=file]{
-    margin-top:15px;
-    color:white;
+    color:#ffd700;
+    text-shadow:0 0 20px gold;
 }
 
 button{
-    margin-top:15px;
-    padding:12px 25px;
-    background:#00ff99;
-    color:black;
+    padding:12px 20px;
     border:none;
-    cursor:pointer;
+    border-radius:8px;
+    background:#00ffff;
     font-weight:bold;
-    border-radius:5px;
-}
-
-button:hover{
-    box-shadow:0 0 15px #00ff99;
-}
-
-.file-list{
-    max-height:300px;
-    overflow-y:auto;
-}
-
-.file-item{
-    background:#08121f;
-    border:1px solid #00ff99;
-    margin:10px 0;
-    padding:12px;
-    border-radius:6px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-.delete{
-    background:red;
-    color:white;
-    padding:5px 10px;
-    border:none;
     cursor:pointer;
-}
-
-/* Dòng code chạy */
-.code-line{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    white-space:nowrap;
-    overflow:hidden;
-    color:#00ff99;
-    font-size:14px;
-    text-shadow:0 0 10px #00ff99;
-    opacity:0.7;
-}
-
-.code-line span{
-    display:inline-block;
-    padding-left:100%;
-    animation:runCode 20s linear infinite;
-}
-
-@keyframes runCode{
-    from{
-        transform:translateX(0);
-    }
-    to{
-        transform:translateX(-100%);
-    }
 }
 </style>
 </head>
+
 <body>
 
-<canvas id="matrix"></canvas>
-
-<div class="code-line">
-<span>
-010101010101 SYSTEM_ACCESS_GRANTED | DATABASE_CONNECTED | STORAGE_ONLINE | SECURITY_ACTIVE | KHO_LUU_TRU_V1.0
-</span>
+<div id="ui">
+Score: <span id="score">0</span><br>
+Level: <span id="level">1</span>
 </div>
 
-<div class="container">
-    <h1>KHO LƯU TRỮ</h1>
-
-    <div class="upload-box">
-        <h2>Tải tệp lên</h2>
-        <p>Hỗ trợ Word, Excel, PDF, ZIP, RAR,...</p>
-        <input type="file" id="fileInput" multiple>
-        <br>
-        <button onclick="saveFiles()">Lưu Danh Sách</button>
-    </div>
-
-    <h2>Danh sách tệp</h2>
-    <div class="file-list" id="fileList"></div>
+<div id="start">
+<h1>CYBER FALCON</h1>
+<p>SPACE / CLICK để bay</p>
+<br>
+<button onclick="startGame()">Bắt đầu</button>
 </div>
+
+<canvas id="game"></canvas>
 
 <script>
-// MATRIX CYBER EFFECT
-const canvas = document.getElementById("matrix");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+function resize(){
+canvas.width=innerWidth;
+canvas.height=innerHeight;
+}
+resize();
+addEventListener("resize",resize);
 
-const chars = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ#$%^&*";
-const fontSize = 16;
-const columns = canvas.width / fontSize;
-const drops = [];
+let gameRunning=false;
+let score=0;
+let level=1;
 
-for(let i=0;i<columns;i++){
-    drops[i]=1;
+const bird={
+x:150,y:300,r:24,
+vel:0,gravity:0.55,jump:-9
+};
+
+let pipes=[];
+let particles=[];
+let speed=4;
+let gap=220;
+let spawnTimer=0;
+
+function startGame(){
+gameRunning=true;
+score=0;
+level=1;
+speed=4;
+gap=220;
+pipes=[];
+particles=[];
+bird.y=canvas.height/2;
+bird.vel=0;
+
+document.getElementById("score").textContent=0;
+document.getElementById("level").textContent=1;
+document.getElementById("start").style.display="none";
 }
 
-function drawMatrix(){
-    ctx.fillStyle="rgba(0,0,0,0.08)";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-
-    ctx.fillStyle="#00ff99";
-    ctx.font=fontSize+"px monospace";
-
-    for(let i=0;i<drops.length;i++){
-        const text=chars[Math.floor(Math.random()*chars.length)];
-        ctx.fillText(text,i*fontSize,drops[i]*fontSize);
-
-        if(drops[i]*fontSize>canvas.height && Math.random()>0.975){
-            drops[i]=0;
-        }
-        drops[i]++;
-    }
-}
-setInterval(drawMatrix,35);
-
-// FILE STORAGE (Tên file)
-function saveFiles(){
-    const input=document.getElementById("fileInput");
-    let files=JSON.parse(localStorage.getItem("storageFiles"))||[];
-
-    for(let file of input.files){
-        files.push({
-            name:file.name,
-            size:file.size
-        });
-    }
-
-    localStorage.setItem("storageFiles",JSON.stringify(files));
-    loadFiles();
+function jump(){
+if(gameRunning) bird.vel=bird.jump;
 }
 
-function loadFiles(){
-    const list=document.getElementById("fileList");
-    let files=JSON.parse(localStorage.getItem("storageFiles"))||[];
+addEventListener("keydown",e=>{
+if(e.code==="Space"){e.preventDefault();jump();}
+});
+addEventListener("mousedown",jump);
+addEventListener("touchstart",jump);
 
-    list.innerHTML="";
+function spawnPipe(){
+const min=100;
+const max=canvas.height-gap-100;
+const top=Math.random()*(max-min)+min;
 
-    files.forEach((file,index)=>{
-        const div=document.createElement("div");
-        div.className="file-item";
-
-        div.innerHTML=`
-            <span>${file.name} (${(file.size/1024).toFixed(2)} KB)</span>
-            <button class="delete" onclick="deleteFile(${index})">Xóa</button>
-        `;
-
-        list.appendChild(div);
-    });
+pipes.push({
+x:canvas.width+80,
+width:80,
+top:top,
+gap:gap,
+scored:false,
+type:Math.floor(Math.random()*3)
+});
 }
 
-function deleteFile(index){
-    let files=JSON.parse(localStorage.getItem("storageFiles"))||[];
-    files.splice(index,1);
-    localStorage.setItem("storageFiles",JSON.stringify(files));
-    loadFiles();
+function drawBackground(){
+const g=ctx.createLinearGradient(0,0,0,canvas.height);
+g.addColorStop(0,"#050816");
+g.addColorStop(1,"#0f172a");
+ctx.fillStyle=g;
+ctx.fillRect(0,0,canvas.width,canvas.height);
 }
 
-loadFiles();
+function drawBird(){
+ctx.save();
+ctx.translate(bird.x,bird.y);
+
+const tilt=Math.max(-0.6,Math.min(0.6,bird.vel*0.05));
+ctx.rotate(tilt);
+
+ctx.shadowBlur=35;
+ctx.shadowColor="#ffd700";
+
+// body
+ctx.fillStyle="#d4af37";
+ctx.beginPath();
+ctx.ellipse(0,0,30,18,0,0,Math.PI*2);
+ctx.fill();
+
+// wings
+ctx.fillStyle="#ffcc00";
+ctx.beginPath();
+ctx.moveTo(-5,-5);
+ctx.lineTo(-45,-25);
+ctx.lineTo(-10,0);
+ctx.fill();
+
+ctx.beginPath();
+ctx.moveTo(-5,5);
+ctx.lineTo(-45,25);
+ctx.lineTo(-10,0);
+ctx.fill();
+
+// cyber wing glow
+ctx.globalAlpha=0.5;
+ctx.fillStyle="#00ffff";
+ctx.beginPath();
+ctx.moveTo(-10,-2);
+ctx.lineTo(-50,-12);
+ctx.lineTo(-15,5);
+ctx.fill();
+
+ctx.beginPath();
+ctx.moveTo(-10,2);
+ctx.lineTo(-50,12);
+ctx.lineTo(-15,-5);
+ctx.fill();
+ctx.globalAlpha=1;
+
+// head
+ctx.fillStyle="#ffd700";
+ctx.beginPath();
+ctx.arc(25,-6,10,0,Math.PI*2);
+ctx.fill();
+
+// eye
+ctx.fillStyle="white";
+ctx.beginPath();
+ctx.arc(28,-8,3,0,Math.PI*2);
+ctx.fill();
+
+ctx.fillStyle="black";
+ctx.beginPath();
+ctx.arc(29,-8,1.5,0,Math.PI*2);
+ctx.fill();
+
+// beak
+ctx.fillStyle="#ff8c00";
+ctx.beginPath();
+ctx.moveTo(35,-5);
+ctx.lineTo(50,0);
+ctx.lineTo(35,5);
+ctx.fill();
+
+// tail
+ctx.fillStyle="#b8860b";
+ctx.beginPath();
+ctx.moveTo(-25,0);
+ctx.lineTo(-60,-10);
+ctx.lineTo(-50,0);
+ctx.lineTo(-60,10);
+ctx.fill();
+
+ctx.restore();
+}
+
+function drawPipe(p){
+ctx.shadowBlur=20;
+ctx.shadowColor="#00ffff";
+
+ctx.fillStyle=p.type===1?"#ff00ff":"#00ffff";
+
+ctx.fillRect(p.x,0,p.width,p.top);
+ctx.fillRect(p.x,p.top+p.gap,p.width,canvas.height);
+}
+
+function update(){
+if(!gameRunning) return;
+
+bird.vel+=bird.gravity;
+bird.y+=bird.vel;
+
+spawnTimer++;
+if(spawnTimer>110-level*5){
+spawnPipe();
+spawnTimer=0;
+}
+
+for(let i=pipes.length-1;i>=0;i--){
+let p=pipes[i];
+p.x-=speed;
+
+if(
+bird.x+bird.r>p.x &&
+bird.x-bird.r<p.x+p.width
+){
+if(
+bird.y-bird.r<p.top ||
+bird.y+bird.r>p.top+p.gap
+){
+gameOver();
+}
+}
+
+if(!p.scored && p.x+80<bird.x){
+p.scored=true;
+score++;
+document.getElementById("score").textContent=score;
+
+if(score%100===0){
+level++;
+speed+=0.8;
+gap=Math.max(120,gap-15);
+document.getElementById("level").textContent=level;
+}
+}
+
+if(p.x<-100) pipes.splice(i,1);
+}
+
+if(bird.y<0||bird.y>canvas.height) gameOver();
+}
+
+function gameOver(){
+gameRunning=false;
+document.getElementById("start").style.display="block";
+document.querySelector("#start h1").innerHTML=
+"GAME OVER<br>Score: "+score;
+}
+
+function render(){
+drawBackground();
+pipes.forEach(drawPipe);
+drawBird();
+}
+
+function loop(){
+update();
+render();
+requestAnimationFrame(loop);
+}
+
+loop();
 </script>
 
 </body>
